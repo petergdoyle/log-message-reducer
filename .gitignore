@@ -1,0 +1,9 @@
+.vagrant
+.DS_Store
+kafka-proxied/
+target/
+nbproject/
+messages
+*.log
+*.out
+log

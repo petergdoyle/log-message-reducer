@@ -71,7 +71,7 @@ public class RunLogMessageBuilderToFile {
                 }, 1500, MILLISECONDS);
 
             } else {
-                
+
                 // log the non error normally 
                 new LogMessage.Builder(LOGGER, randomLevel, lorem.getWords(randWordLenMin, randWordLenMax))
                         .addTag("trackId", trackingId)

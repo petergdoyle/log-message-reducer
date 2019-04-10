@@ -18,7 +18,7 @@ import org.json.simple.JSONObject;
 public class LogMessage {
 
     private final HashMap<String, String> tags;
-    private String body;
+    private final String body;
 
     public enum Level {
         trace,
@@ -27,8 +27,9 @@ public class LogMessage {
         info,
         error,
         fatal;
-        public static Level getRandomLevel(final Random random) {
-            return values()[random.nextInt(values().length)];
+
+        public static Level getRandomLevel(final Random r) {
+            return values()[r.nextInt(values().length)];
         }
     }
 
@@ -56,7 +57,7 @@ public class LogMessage {
         private final String body;
         private final String ts;
         private final Logger logger;
-        private Level level;
+        private final Level level;
         private final OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
 
         Builder(Logger logger, Level level, String body) {
@@ -97,7 +98,7 @@ public class LogMessage {
             msg.tags.forEach((k, v) -> obj.put(k, v));
             obj.put("body", msg.body);
 //            obj.put("ts", utc);
-            String str = obj.toJSONString().toString();
+            String str = obj.toJSONString();
             return str;
         }
 

@@ -1,6 +1,6 @@
 /*
  */
-package com.cleverfishsoftware.utils.messagebuillder;
+package com.cleverfishsoftware.utils.messagegenerator;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import java.util.concurrent.ScheduledExecutorService;

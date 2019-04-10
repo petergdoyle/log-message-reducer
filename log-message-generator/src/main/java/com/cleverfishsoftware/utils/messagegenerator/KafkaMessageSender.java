@@ -1,6 +1,6 @@
 /*
  */
-package com.cleverfishsoftware.utils.messagebuillder;
+package com.cleverfishsoftware.utils.messagegenerator;
 
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;

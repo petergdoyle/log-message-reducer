@@ -1,6 +1,6 @@
 /*
  */
-package com.cleverfishsoftware.utils.messagebuillder;
+package com.cleverfishsoftware.utils.messagegenerator;
 
 import org.apache.logging.log4j.LogManager;
 import com.thedeanda.lorem.Lorem;

@@ -1,6 +1,6 @@
 /*
  */
-package com.cleverfishsoftware.utils.messagebuillder;
+package com.cleverfishsoftware.utils.messagegenerator;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;

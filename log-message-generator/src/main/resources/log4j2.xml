@@ -2,7 +2,6 @@
 <Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
     <Appenders>
         <Kafka name="Kafka" topic="logs">
-            <!--<PatternLayout pattern="%date %message"/>-->
             <Property name="bootstrap.servers">localhost:9092</Property>
             <PatternLayout pattern="%d{dd/MMM/yyyy:hh:mm:ss Z} %-5p [%-7t] %F:%L - %m%n"/>
         </Kafka>
@@ -20,7 +19,7 @@
             <!-- append to kafka -->
             <AppenderRef ref="Kafka"/>
             <!-- append to console as well-->
-            <AppenderRef ref="stdout"/> 
+            <!-- <AppenderRef ref="stdout"/> -->
         </Root>
         <Logger name="org.apache.kafka" level="WARN" />
     </Loggers>

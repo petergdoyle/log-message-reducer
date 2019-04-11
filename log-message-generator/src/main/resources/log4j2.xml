@@ -19,7 +19,7 @@
             <!-- append to kafka -->
             <AppenderRef ref="Kafka"/>
             <!-- append to console as well-->
-            <!-- <AppenderRef ref="stdout"/> -->
+            <AppenderRef ref="stdout"/>
         </Root>
         <Logger name="org.apache.kafka" level="WARN" />
     </Loggers>

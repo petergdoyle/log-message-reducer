@@ -15,7 +15,7 @@
 
     </Appenders>
     <Loggers>
-        <Root level="DEBUG">
+        <Root level="TRACE">
             <!-- append to kafka -->
             <AppenderRef ref="Kafka"/>
             <!-- append to console as well-->

@@ -51,7 +51,7 @@ public class RunLogMessageGenerator {
         int relatedMsgCntMax = 8;
         LogMessageRateLimiter rateLimiter = new LogMessageRateLimiter(rateLimit);
         float seconds = limit / rateLimit;
-        System.out.printf("generating log messages (should take aproximately %.1f seconds to complete)...\n", seconds);
+        System.out.printf("generating %d log messages at a rate of %.1f (should take aproximately %.1f seconds to complete)...\n", limit, rateLimit, seconds);
         for (int i = 0; i < limit; i++) {
 
             LogMessage.Level randomLevel = LogMessage.Level.getRandomLevel(random);
@@ -77,7 +77,7 @@ public class RunLogMessageGenerator {
                 // log the error itself last a little later so it appears after all the related log messages
                 rateLimiter.execute(() -> {
                     try {
-                        TimeUnit.MILLISECONDS.sleep(1500);
+                        TimeUnit.MILLISECONDS.sleep(800);
                         new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
                                 .addTag("trackId", trackingId)
                                 .addTag("identifier", LogMessage.Level.error.toString())

@@ -146,8 +146,14 @@ export PATH=\\\$PATH:\\\$SPARK_HOME/bin
 EOF
     # spark nodes need a checkpoint directory to keep state should a node go down
     if [ ! -d "/spark/checkpoint" ]; then
-      mkdir -p "/spark/checkpoint"
+      mkdir -pv "/spark/checkpoint"
       chmod ugo+rw "/spark/checkpoint/"
+    fi
+    
+    # spark nodes need a logs directory
+    if [ ! -d "/usr/spark/default/logs" ]; then
+      mkdir -pv "/usr/spark/default/logs"
+      chmod ugo+rw "/usr/spark/default/logs"
     fi
 
   else

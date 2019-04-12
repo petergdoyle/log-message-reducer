@@ -45,7 +45,7 @@ object LogTopicSplitter {
     val checkpointDir=args(5)
     var outputsDir=args(6)
 
-    val systemParams = s"brokers: $brokers consumerGroupId: $consumerGroupId consumerTopic: $consumerTopic producerErrTopic: $producerErrTopic checkpointDir: $checkpointDir outputsDir: $outputsDir"
+    val systemParams = s"systemParams: {brokers: $brokers consumerGroupId: $consumerGroupId consumerTopic: $consumerTopic producerErrTopic: $producerErrTopic checkpointDir: $checkpointDir outputsDir: $outputsDir}"
     println(systemParams)
 
     def log4jLogPattern(): Pattern = {

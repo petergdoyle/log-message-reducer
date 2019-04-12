@@ -17,28 +17,36 @@ import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 
-object LogTopicsSplitter {
+object LogTopicSplitter {
 
   // Case class defining structured data for a line of Apache access log data
   case class LogEntry(dateTime:String, level:String, thread:String, location:String, msg:String)
 
   def main(args: Array[String]) {
 
-    if (args.length < 4) {
-        System.err.println("Usage: LogTopicsSplitter <spark-master> <brokers> <groupId> <topic1,topic2,...> <batchsize> <threshold> <checkpointsDir> <violationsDir>\n"
-                + "  <spark-master> is used by the spark context to determine how to execute\n"
+    if (args.length < 7) {
+        System.err.println("Usage: LogTopicSplitter <brokers> <consumerGroupId> <consumer-topic> <producerErrTopic> <producerOutTopic> <checkpointsDir> <outputsDir>\n"
                 + "  <brokers> is a list of one or more Kafka brokers\n"
-                + "  <groupId> is a consumer group name to consume from topics\n"
-                + "  <topics> is a list of one or more kafka topics to consume from\n\n")
+                + "  <consumerGroupId> is a consumer group name to consume from topics\n"
+                + "  <consumerTopic> the topic to listen for mixed log messages\n"
+                + "  <producerErrTopic> the topic to put error messages onto \n"
+                + "  <producerOutTopic> the topic to put non-error messages onto \n"
+                + "  <checkpointDir> the location for spark streaming checkpoints\n"
+                + "  <outputsDir> the location for any console output\n"
+                + "\n")
         System.exit(1)
     }
 
-    val master=args(0)
-    val brokers=args(1)
-    val groupId=args(2)
-    val topics=args(3)
-    val checkpointDir="/spark/checkpoint"
-    var errorsDir="./errors"
+    val brokers=args(0)
+    val consumerGroupId=args(1)
+    val consumerTopic=args(2)
+    val producerErrTopic=args(3)
+    val producerOutTopic=args(4)
+    val checkpointDir=args(5)
+    var outputsDir=args(6)
+
+    val systemParams = s"brokers: $brokers consumerGroupId: $consumerGroupId consumerTopic: $consumerTopic producerErrTopic: $producerErrTopic checkpointDir: $checkpointDir outputsDir: $outputsDir"
+    println(systemParams)
 
     def log4jLogPattern(): Pattern = {
       val dateTime = "(\\[.+?\\])?"
@@ -85,7 +93,7 @@ object LogTopicsSplitter {
 
     val spark = SparkSession
       .builder
-      .appName("LogTopicsJoiner")
+      .appName("LogTopicSplitter")
       .getOrCreate() // recover session from checkpoint if necessary
 
     import spark.implicits._
@@ -95,14 +103,19 @@ object LogTopicsSplitter {
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
-      .option("subscribe", topics)
+      .option("subscribe", consumerTopic)
       .load()
       .selectExpr("CAST(value AS STRING)")
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the two columns we care about
-    val structuredData = stream.flatMap(parseLog)
+    val structuredData = stream.flatMap(parseLog).select("level", "dateTime")
 
-    val query = structuredData.writeStream
+    val windowed = structuredData
+    .groupBy($"level",window($"dateTime", "2 second"))
+    .count()
+    .orderBy("window")
+
+    val query = windowed.writeStream
       .outputMode("complete")
       .format("console")
       .option("checkpointLocation",checkpointDir)

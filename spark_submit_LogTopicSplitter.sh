@@ -8,7 +8,7 @@ driver_java_options_quiet='--driver-java-options "-Dlog4j.configuration=file:///
 driver_java_options_default=''
 driver_java_options=$driver_java_options_quiet
 
-# System.err.println("Usage: LogTopicsSplitter <brokers> <consumerGroupId> <consumer-topic> <producerErrTopic> <producerOutTopic> <checkpointsDir> <outputsDir>\n"
+# System.err.println("Usage: LogTopicSplitter <brokers> <consumerGroupId> <consumer-topic> <producerErrTopic> <producerOutTopic> <checkpointsDir> <outputsDir>\n"
 #         + "  <brokers> is a list of one or more Kafka brokers\n"
 #         + "  <consumerGroupId> is a consumer group name to consume from topics\n"
 #         + "  <consumerTopic> the topic to listen for mixed log messages\n"
@@ -19,7 +19,7 @@ driver_java_options=$driver_java_options_quiet
 
 broker_list='localhost:9092'
 consumer_topic_name="logs"
-consumer_group_id="LogTopicsSplitter-cg"
+consumer_group_id="LogTopicSplitter-cg"
 producer_err_topic_name="logs-stderr"
 producer_out_topic_name="logs-stdout"
 checkpoint_dir="/spark/checkpoint"

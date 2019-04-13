@@ -2,6 +2,7 @@ package com.cleverfishsoftware.challenge.scala
 
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
@@ -104,24 +105,38 @@ object LogTopicSplitter {
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
       .option("subscribe", consumerTopic)
+      .option("startingOffsets", "earliest")
       .load()
       .selectExpr("CAST(value AS STRING)")
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the two columns we care about
-    val structuredData = stream.flatMap(parseLog).select("level", "dateTime")
+    val ds = stream.flatMap(parseLog).select("level","dateTime","msg")
+    val errDs = ds.filter($"level" === "ERROR")
+    val outDs = ds.filter(not($"level" === "ERROR"))
 
-    val windowed = structuredData
-    .groupBy($"level",window($"dateTime", "2 second"))
-    .count()
-    .orderBy("window")
-
-    val query = windowed.writeStream
-      .outputMode("complete")
+    val query = errDs.writeStream
+      .outputMode(OutputMode.Append)
       .format("console")
       .option("checkpointLocation",checkpointDir)
       .start()
 
-    query.awaitTermination()
+    // outDs
+    //   .writeStream // use `write` for batch, like DataFrame
+    //   .format("kafka")
+    //   .option("kafka.bootstrap.servers", brokers)
+    //   .option("topic", producerOutTopic)
+    //   .option("checkpointLocation",s"$checkpointDir/out")
+    //   .start()
+    //   .awaitTermination()
+    //
+    // errDs
+    //   .writeStream // use `write` for batch, like DataFrame
+    //   .format("kafka")
+    //   .option("kafka.bootstrap.servers", brokers)
+    //   .option("checkpointLocation",s"$checkpointDir/err")
+    //   .option("topic", producerErrTopic)
+    //   .start()
+    //   .awaitTermination()
 
     spark.stop()
 

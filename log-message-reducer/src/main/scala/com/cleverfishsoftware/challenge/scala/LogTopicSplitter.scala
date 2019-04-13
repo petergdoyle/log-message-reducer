@@ -100,43 +100,53 @@ object LogTopicSplitter {
     import spark.implicits._
 
     // Create DataSet representing the stream of input lines from kafka
-    val stream = spark
+    val df = spark
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
       .option("subscribe", consumerTopic)
       .option("startingOffsets", "earliest")
+      //       Cannot fetch offset 2193 (GroupId: spark-kafka-source-5dc3a716-9542-44a5-af3e-f20b68bb4c42-1424840661-executor, TopicPartition: logs-1).
+      // Some data may have been lost because they are not available in Kafka any more; either the
+      //  data was aged out by Kafka or the topic may have been deleted before all the data in the
+      //  topic was processed. If you don't want your streaming query to fail on such cases, set the
+      //  source option "failOnDataLoss" to "false".
+      .option("failOnDataLoss", "false")
       .load()
       .selectExpr("CAST(value AS STRING)")
 
-    // Convert our raw text into a DataSet of LogEntry rows, then just select the two columns we care about
-    val ds = stream.flatMap(parseLog).select("level","dateTime","msg")
-    val errDs = ds.filter($"level" === "ERROR")
+    // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
+    val ds = df.flatMap(parseLog).select("level","dateTime","msg")
+
     val outDs = ds.filter(not($"level" === "ERROR"))
-
-    val query = errDs.writeStream
-      .outputMode(OutputMode.Append)
-      .format("console")
-      .option("checkpointLocation",checkpointDir)
+    outDs
+      .selectExpr("CAST(msg AS STRING) AS value")
+      .writeStream // use `write` for batch, like DataFrame
+      .format("kafka")
+      .option("kafka.bootstrap.servers", brokers)
+      .option("checkpointLocation",s"$checkpointDir/out")
+      .option("topic", producerOutTopic)
+      .outputMode("append")
       .start()
+      .awaitTermination()
 
-    // outDs
-    //   .writeStream // use `write` for batch, like DataFrame
-    //   .format("kafka")
-    //   .option("kafka.bootstrap.servers", brokers)
-    //   .option("topic", producerOutTopic)
-    //   .option("checkpointLocation",s"$checkpointDir/out")
+    // val query = outDs.writeStream
+    //   .outputMode(OutputMode.Append)
+    //   .format("console")
+    //   .option("checkpointLocation",checkpointDir)
     //   .start()
-    //   .awaitTermination()
-    //
-    // errDs
-    //   .writeStream // use `write` for batch, like DataFrame
-    //   .format("kafka")
-    //   .option("kafka.bootstrap.servers", brokers)
-    //   .option("checkpointLocation",s"$checkpointDir/err")
-    //   .option("topic", producerErrTopic)
-    //   .start()
-    //   .awaitTermination()
+
+    val errDs = ds.filter($"level" === "ERROR")
+    errDs
+      .selectExpr("CAST(msg AS STRING) AS value")
+      .writeStream // use `write` for batch, like DataFrame
+      .format("kafka")
+      .option("kafka.bootstrap.servers", brokers)
+      .option("checkpointLocation",s"$checkpointDir/err")
+      .option("topic", producerErrTopic)
+      .outputMode("append")
+      .start()
+      .awaitTermination()
 
     spark.stop()
 

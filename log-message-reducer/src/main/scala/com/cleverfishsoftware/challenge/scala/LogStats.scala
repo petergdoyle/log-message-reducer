@@ -53,13 +53,13 @@ object LogStats {
       .option("startingOffsets", "earliest")
       .option("failOnDataLoss", "false")
       .load()
-      .selectExpr("CAST(value AS STRING)")
+
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
-    val ds = df.flatMap(parseLog).select("level","dateTime")
+    val ds = df.selectExpr("CAST(value AS STRING)").flatMap(parseLog).select("level","dateTime")
 
     val windowed = ds
-      .groupBy(window($"dateTime","4 seconds"), $"level")
+      .groupBy(window($"dateTime","1 seconds"), $"level")
       .count()
       .orderBy("window")
 

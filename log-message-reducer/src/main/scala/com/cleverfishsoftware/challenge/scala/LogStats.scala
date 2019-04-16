@@ -2,7 +2,6 @@ package com.cleverfishsoftware.challenge.scala
 
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
@@ -63,10 +62,15 @@ object LogStats {
       .count()
       .orderBy("window")
 
+    import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+    import scala.concurrent.duration._
+    // dump records to the console every 10 seconds
     val query = windowed.writeStream
-      .outputMode("complete")
       .format("console")
       .option("checkpointLocation",s"$checkpointDir/stats")
+      .option("truncate", false)
+      .trigger(Trigger.ProcessingTime(5.seconds))
+      .outputMode(OutputMode.Complete)
       .start()
       .awaitTermination
 

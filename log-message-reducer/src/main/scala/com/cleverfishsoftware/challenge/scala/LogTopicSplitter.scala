@@ -17,12 +17,9 @@ import Utilities._
 
 object LogTopicSplitter {
 
-  // Case class defining structured data for a line of Apache access log data
-  case class LogEntry(dateTime:String, level:String, thread:String, location:String, msg:String)
-
   def main(args: Array[String]) {
 
-    if (args.length < 7) {
+    if (args.length < 6) {
         System.err.println("Usage: LogTopicSplitter <brokers> <consumerGroupId> <consumer-topic> <producerErrTopic> <producerOutTopic> <checkpointsDir> <outputsDir>\n"
                 + "  <brokers> is a list of one or more Kafka brokers\n"
                 + "  <consumerGroupId> is a consumer group name to consume from topics\n"
@@ -30,7 +27,6 @@ object LogTopicSplitter {
                 + "  <producerErrTopic> the topic to put error messages onto \n"
                 + "  <producerOutTopic> the topic to put non-error messages onto \n"
                 + "  <checkpointDir> the location for spark streaming checkpoints\n"
-                + "  <outputsDir> the location for any console output\n"
                 + "\n")
         System.exit(1)
     }
@@ -41,9 +37,8 @@ object LogTopicSplitter {
     val producerErrTopic=args(3)
     val producerOutTopic=args(4)
     val checkpointDir=args(5)
-    var outputsDir=args(6)
 
-    val systemParams = s"systemParams: {brokers: $brokers consumerGroupId: $consumerGroupId consumerTopic: $consumerTopic producerErrTopic: $producerErrTopic checkpointDir: $checkpointDir outputsDir: $outputsDir}"
+    val systemParams = s"systemParams: {brokers: $brokers consumerGroupId: $consumerGroupId consumerTopic: $consumerTopic producerOutTopic: $producerOutTopic producerErrTopic: $producerErrTopic checkpointDir: $checkpointDir}"
     println(systemParams)
 
 
@@ -55,7 +50,7 @@ object LogTopicSplitter {
     import spark.implicits._
 
     // Create DataSet representing the stream of input lines from kafka
-    val df = spark
+    val stream = spark
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
@@ -71,34 +66,26 @@ object LogTopicSplitter {
       .selectExpr("CAST(value AS STRING)")
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
-    val ds = df.flatMap(parseLog).select("level","dateTime","msg")
+    val ds = stream.flatMap(parseLog).select("level","dateTime","msg")
 
-    val outDs = ds.filter(not($"level" === "ERROR"))
-    outDs
+    ds.filter($"level" === "ERROR")
       .selectExpr("CAST(msg AS STRING) AS value")
-      .writeStream // use `write` for batch, like DataFrame
-      .format("kafka")
-      .option("kafka.bootstrap.servers", brokers)
-      .option("checkpointLocation",s"$checkpointDir/split/out")
-      .option("topic", producerOutTopic)
-      .outputMode("append")
-      .start()
-      .awaitTermination()
-
-    // val query = outDs.writeStream
-    //   .outputMode(OutputMode.Append)
-    //   .format("console")
-    //   .option("checkpointLocation",checkpointDir)
-    //   .start()
-
-    val errDs = ds.filter($"level" === "ERROR")
-    errDs
-      .selectExpr("CAST(msg AS STRING) AS value")
-      .writeStream // use `write` for batch, like DataFrame
+      .writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
       .option("checkpointLocation",s"$checkpointDir/split/err")
       .option("topic", producerErrTopic)
+      .outputMode("append")
+      .start()
+      .awaitTermination()
+
+    ds.filter(not($"level" === "ERROR"))
+      .selectExpr("CAST(msg AS STRING) AS value")
+      .writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", brokers)
+      .option("checkpointLocation",s"$checkpointDir/split/out")
+      .option("topic", producerOutTopic)
       .outputMode("append")
       .start()
       .awaitTermination()

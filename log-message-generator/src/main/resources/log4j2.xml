@@ -5,7 +5,7 @@
             <Property name="bootstrap.servers">localhost:9092</Property>
             <PatternLayout pattern="%d{dd/MMM/yyyy:hh:mm:ss Z} %-5p [%-7t] %F:%L - %m%n"/>
         </Kafka>
-        <Async name="Async">
+        <Async name="AsyncKafka">
             <AppenderRef ref="Kafka"/>
         </Async>
 
@@ -13,7 +13,14 @@
             <PatternLayout pattern="%d{dd/MMM/yyyy:hh:mm:ss Z} %-5p [%-7t] %F:%L - %m%n"/>
         </Console>
 
-        <RollingFile
+        <File name="file" fileName="logs/app.log">
+        <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
+        </File>
+<!--        <Async name="AsyncFile">
+            <AppenderRef ref="file"/>
+        </Async>-->
+
+<!--        <RollingFile
             name="rollingFile"
             fileName="logs/application.log"
             filePattern="logs/application.%i.log.gz"
@@ -23,16 +30,19 @@
                 <SizeBasedTriggeringPolicy size="10MB" />
             </Policies>
             <DefaultRolloverStrategy max="5" />
-        </RollingFile>
+        </RollingFile>-->
 
     </Appenders>
     <Loggers>
         <Root level="TRACE">
             <!-- append to kafka -->
-            <AppenderRef ref="Kafka"/>
+            <!-- <AppenderRef ref="Kafka"/> -->
             <!-- append to console as well-->
             <!--<AppenderRef ref="stdout"/>-->
-            <AppenderRef ref="rollingFile"/>
+            <!--<AppenderRef ref="file"/>-->
+            <!--<AppenderRef ref="stdout"/>-->
+            <!-- <AppenderRef ref="rollingFile"/> -->
+            <AppenderRef ref="file"/> 
         </Root>
         <Logger name="org.apache.kafka" level="WARN" />
     </Loggers>

@@ -88,8 +88,14 @@ public class LogMessage {
                 case info:
                     logger.info(serialized);
                     break;
-                default:
+                case error:
                     logger.error(serialized);
+                    break;
+                case fatal:
+                    logger.fatal(serialized);
+                    break;
+                default:
+                    throw new RuntimeException("this isn't supposed to fall thru");
             }
         }
 

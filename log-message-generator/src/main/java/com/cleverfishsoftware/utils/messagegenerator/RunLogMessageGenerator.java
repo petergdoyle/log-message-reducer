@@ -6,19 +6,23 @@ import org.apache.logging.log4j.LogManager;
 import com.thedeanda.lorem.Lorem;
 import com.thedeanda.lorem.LoremIpsum;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ScheduledExecutorService;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
  */
 public class RunLogMessageGenerator {
 
+    // each class must declare it's own logger and pass it to the LogBuilder or else we lose class level log scope
+    private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(RunLogMessageGenerator.class.getName());
+
     public static void main(String[] args) throws NoSuchAlgorithmException {
         int limit = 0;
         float rateLimit = 0.0f;
+        float errRateLimit = 0.f;
         boolean error = false;
         if (args == null || args.length == 0) {
             error = true;
@@ -33,6 +37,11 @@ public class RunLogMessageGenerator {
             } catch (Exception ex) {
                 error = true;
             }
+            try {
+                errRateLimit = Float.parseFloat(args[2]);
+            } catch (Exception ex) {
+                error = true;
+            }
 
         }
         if (error) {
@@ -41,53 +50,63 @@ public class RunLogMessageGenerator {
                     + "rate - the rate per second to generate messages\n\n");
             System.exit(1);
         }
-        // each class must declare it's own logger and pass it to the LogBuilder or else we lose class level log scope
-        org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(RunLogMessageGenerator.class.getName());
         Lorem lorem = LoremIpsum.getInstance();
         Random random = new Random();
         int randWordLenMin = 5;
         int randWordLenMax = 15;
         int relatedMsgCntMin = 2;
         int relatedMsgCntMax = 8;
+        int errCnt = 0;
         LogMessageRateLimiter rateLimiter = new LogMessageRateLimiter(rateLimit);
         float seconds = limit / rateLimit;
-        System.out.printf("generating %d log messages at a rate of %.1f (should take aproximately %.1f seconds to complete)...\n", limit, rateLimit, seconds);
+        Set<String> usedTrackingIds = new HashSet<>();
+        System.out.printf("generating %d log messages throttled at a rate of %.0f per second, with an error-rate of %.2f pct. it should take aproximately %.1f seconds to complete...\n\n", limit, rateLimit, errRateLimit, seconds);
         for (int i = 0; i < limit; i++) {
 
-            LogMessage.Level randomLevel = LogMessage.Level.getRandomLevel(random);
             final String trackingId = UUID.randomUUID().toString();
+            if (usedTrackingIds.contains(trackingId)) {
+                throw new RuntimeException("Unexpected Condition. Tracking Id must be unique. Found more than one generated Tradking Id for trackingId: " + trackingId);
+            }
+            usedTrackingIds.add(trackingId);
 
-            if (randomLevel.equals(LogMessage.Level.error) || randomLevel.equals(LogMessage.Level.fatal)) {
+            LogMessage.Level randomLevel = LogMessage.Level.getRandomLevel(random);
 
-                // generate other log messages related to the error with the same trackingId
-                int r = random.nextInt((relatedMsgCntMax - relatedMsgCntMin) + 1) + relatedMsgCntMin;
-                for (int j = 0; j < r; j++) {
-                    do {
-                        randomLevel = LogMessage.Level.getRandomLevel(random);
-                    } while (randomLevel.equals(LogMessage.Level.error) || randomLevel.equals(LogMessage.Level.fatal));
-                    String randomLevelAsString = randomLevel.toString();
-                    rateLimiter.execute(() -> {
-                        new LogMessage.Builder(LOGGER, LogMessage.Level.valueOf(randomLevelAsString), lorem.getWords(randWordLenMin, randWordLenMax))
-                                .addTag("trackId", trackingId)
-                                .addTag("identifier", randomLevelAsString)
-                                .log();
-                    });
-                }
-
-                // log the error itself last a little later so it appears after all the related log messages
-                rateLimiter.execute(() -> {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(800);
-                        new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
-                                .addTag("trackId", trackingId)
-                                .addTag("identifier", LogMessage.Level.error.toString())
-                                .log();
-                    } catch (InterruptedException ex) {
+            if (randomLevel.equals(LogMessage.Level.error)) {
+                double errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;
+                if (errRate <= errRateLimit) {
+                    int r = random.nextInt((relatedMsgCntMax - relatedMsgCntMin) + 1) + relatedMsgCntMin;
+                    for (int j = 0; j < r; j++) {
+                        do {
+                            randomLevel = LogMessage.Level.getRandomLevel(random);
+                        } while (randomLevel.equals(LogMessage.Level.error));
+                        if (randomLevel.equals(LogMessage.Level.error)) {
+                            throw new RuntimeException("Unexpected Condition. This should never be " + LogMessage.Level.error.toString());
+                        }
+                        String randomLevelAsString = randomLevel.toString();
+                        rateLimiter.execute(() -> {
+                            new LogMessage.Builder(LOGGER, LogMessage.Level.valueOf(randomLevelAsString), lorem.getWords(randWordLenMin, randWordLenMax))
+                                    .addTag("trackId", trackingId)
+                                    .addTag("identifier", randomLevelAsString)
+                                    .log();
+                        });
+                        i++;
                     }
-                });
-
+                    rateLimiter.execute(() -> {
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(1500);
+                            new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
+                                    .addTag("trackId", trackingId)
+                                    .addTag("identifier", LogMessage.Level.error.toString())
+                                    .log();
+                        } catch (InterruptedException ex) {
+                        }
+                    });
+                    errCnt++;
+                    errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;
+                } else {
+                    i--; // don't count this iteration as nothing got logged
+                }
             } else {
-
                 // log the non error normally using the RateLimiter
                 String randomLevelAsString = randomLevel.toString();
                 rateLimiter.execute(() -> {
@@ -98,21 +117,36 @@ public class RunLogMessageGenerator {
                 });
 
             }
+
         }
 
         rateLimiter.shutdown();
 
     }
 
-    static private String hexEncode(byte[] input) {
-        StringBuilder result = new StringBuilder();
-        char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-        for (int idx = 0; idx < input.length; ++idx) {
-            byte b = input[idx];
-            result.append(digits[(b & 0xf0) >> 4]);
-            result.append(digits[b & 0x0f]);
+    static void log(LogMessage.Level level, String msg) {
+        switch (level) {
+            case trace:
+                LOGGER.trace(msg);
+                break;
+            case debug:
+                LOGGER.debug(msg);
+                break;
+            case warn:
+                LOGGER.warn(msg);
+                break;
+            case info:
+                LOGGER.info(msg);
+                break;
+            case error:
+                LOGGER.error(msg);
+                break;
+            case fatal:
+                LOGGER.fatal(msg);
+                break;
+            default:
+                throw new RuntimeException("this isn't supposed to fall thru");
         }
-        return result.toString();
     }
 
 }

@@ -7,3 +7,4 @@ messages
 *.log
 *.out
 log
+nbactions.xml

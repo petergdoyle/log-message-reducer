@@ -8,3 +8,4 @@ messages
 *.out
 log
 nbactions.xml
+*zip

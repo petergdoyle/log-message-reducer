@@ -21,7 +21,7 @@ params="$broker_list $consumer_group_id $topic $checkpoint_dir"
 skip_build="$1"
 status=0
 if  [ "$skip_build" != "--skipBuild" ]; then
-  mvn -f log-message-reducer/pom.xml package
+  mvn -f log-message-reducer/pom.xml clean package
   status=$?
 fi
 

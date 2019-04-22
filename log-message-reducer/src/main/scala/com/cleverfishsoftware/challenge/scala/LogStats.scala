@@ -44,7 +44,7 @@ object LogStats {
     import spark.implicits._
 
     // Create DataSet representing the stream of input lines from kafka
-    val df = spark
+    val stream = spark
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
@@ -55,24 +55,41 @@ object LogStats {
 
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
-    val ds = df.selectExpr("CAST(value AS STRING)").flatMap(parseLog).select("level","dateTime")
+    val ds = stream.selectExpr("CAST(value AS STRING)")
 
-    val windowed = ds
-      .groupBy(window($"dateTime","1 seconds"), $"level")
-      .count()
-      .orderBy("window")
+    val structured = ds.flatMap(parseLog).select("level")
 
     import org.apache.spark.sql.streaming.{OutputMode, Trigger}
     import scala.concurrent.duration._
-    // dump records to the console every 10 seconds
-    val query = windowed.writeStream
-      .format("console")
-      .option("checkpointLocation",s"$checkpointDir/stats")
-      .option("truncate", false)
-      .trigger(Trigger.ProcessingTime(5.seconds))
-      .outputMode(OutputMode.Complete)
-      .start()
-      .awaitTermination
+
+    structured
+      .groupBy("level")
+      .count()
+      .writeStream
+        .format("console")
+        .option("checkpointLocation",s"$checkpointDir/stats")
+        .option("truncate", false)
+        .trigger(Trigger.ProcessingTime(5.seconds))
+        .outputMode(OutputMode.Complete)
+        .start()
+        .awaitTermination
+
+    // val structured = stream.flatMap(parseLog).select("level","dateTime")
+    //
+    // val windowed = structured
+    //   .groupBy(window($"dateTime","1 seconds"), $"level")
+    //   .count()
+    //   .orderBy("window")
+    //
+    // // dump records to the console every 5 seconds
+    // val query = windowed.writeStream
+    //   .format("console")
+    //   .option("checkpointLocation",s"$checkpointDir/stats")
+    //   .option("truncate", false)
+    //   .trigger(Trigger.ProcessingTime(5.seconds))
+    //   .outputMode(OutputMode.Complete)
+    //   .start()
+    //   .awaitTermination
 
     spark.stop()
 

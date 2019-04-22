@@ -7,25 +7,27 @@ import java.util.Locale
 
 import org.apache.spark.sql._
 
-import java.util.regex.Pattern
-import java.util.regex.Matcher
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 object Utilities {
 
     // Case class defining structured data for a line of Apache access log data
     case class LogEntry(dateTime:String, level:String, thread:String, location:String, msg:String)
 
+    val sample_msg = "[22/Apr/2019:05:32:46 +0000] DEBUG [pool-2-thread-1] LogMessage.java:83 - {\"identifier\":\"debug\",\"trackId\":\"5b952441-878d-4cfe-828f-578b5a960d58\",\"body\":\"menandri viverra vel dissentiunt homero esse an reprehendunt labores aliquam habitasse perpetua dictas\"}"
+
     def log4jLogPattern(): Pattern = {
-      val dateTime = "(\\[.+?\\])?"
-      val level = "(\\S+)"
-      val thread = "(\\[.+?\\])"
-      val location = "(\\S+)"
-      val msg = "(.+)"
-      val regex = s"$dateTime $level $thread $location - $msg"
-      Pattern.compile(regex)
+      val regexx = "(\\[.+?\\])? (\\S+) (.+) (.+) - (.+)"
+      Pattern.compile(regexx)
     }
+
+    // def log4jLogPattern(): Pattern = {
+    //   val dateTime = "(\\[.+?\\])?"
+    //   val level = "(\\S+)"
+    //   val thread = "(\\[.+?\\])"
+    //   val location = "(\\S+)"
+    //   val msg = "(.+)"
+    //   val regex = s"$dateTime $level $thread $location - $msg"
+    //   Pattern.compile(regex)
+    // }
 
     val datePattern = Pattern.compile("\\[(.*?) .+]") // will help out parse parts of a timestamp
     // Function to convert log timestamps to what Spark
@@ -42,10 +44,11 @@ object Utilities {
       }
     }
 
+
     val logPattern = log4jLogPattern()
     // Convert a raw line of Apache access log data to a structured LogEntry object (or None if line is corrupt)
-    def parseLog(x:Row) : Option[LogEntry] = {
-      val s = Option(x.getString(0)).getOrElse("")
+    def parseLog(row:Row) : Option[LogEntry] = {
+      val s = Option(row.getString(0).trim).getOrElse("")
       val matcher:Matcher = logPattern.matcher(s);
       if (matcher.matches()) {
         return Some(LogEntry(
@@ -56,7 +59,18 @@ object Utilities {
         matcher.group(5)
         ))
       } else {
+        // val matcher2:Matcher = logPattern.matcher(row.getString(0).trim);
+        // println(matcher2.matches())
+        // // println("[CANNOT PARSE] logPattern: " + logPattern + " row size: "+ row.size + " row: " + row.getString(0))
+        // // println("error cannot match")
         return None
+        // return Some(LogEntry(
+        // "error",
+        // "error",
+        // "error",
+        // "error",
+        // "error"
+        // ))
       }
     }
 

@@ -39,7 +39,7 @@
             <AppenderRef ref="kafka"/>
             <!-- append to console as well-->
             <!-- <AppenderRef ref="stdout"/> -->
-            <AppenderRef ref="oneFile"/>
+            <!-- <AppenderRef ref="oneFile"/> -->
             <!--<AppenderRef ref="stdout"/>-->
             <!-- <AppenderRef ref="rollingFile"/> -->
             <!-- <AppenderRef ref="AsyncFile"/> -->

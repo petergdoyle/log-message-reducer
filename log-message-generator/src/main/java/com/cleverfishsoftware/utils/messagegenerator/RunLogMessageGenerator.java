@@ -63,7 +63,7 @@ public class RunLogMessageGenerator {
         float seconds = limit / rateLimit;
         Set<String> usedTrackingIds = new HashSet<>();
         Map<String, Integer> counts = new HashMap<>();
-        System.out.printf("generating %d log messages throttled at a rate of %.0f per second, with an error-rate of %.2f pct. it should take aproximately %.1f seconds to complete...\n\n", limit, rateLimit, errRateLimit, seconds);
+        System.out.printf("\n\n[INFO] generating %d log messages throttled at a rate of %.0f per second, with an error-rate of %.2f pct. it should take aproximately %.1f seconds to complete...\n\n", limit, rateLimit, errRateLimit, seconds);
         for (int i = 0; i < limit; i++) {
 
             final String trackingId = UUID.randomUUID().toString();
@@ -126,11 +126,12 @@ public class RunLogMessageGenerator {
                 counts.put(randomLevelAsString, ((get != null) ? get : 0) + 1);
             }
 
-            System.out.printf("\rTotal: %d %s", i + 1, counts);
+            System.out.printf("\r[INFO] Total: %d %s", i + 1, counts);
 
         }
 
         rateLimiter.shutdown();
+        System.out.printf("\n\n");
 
     }
 

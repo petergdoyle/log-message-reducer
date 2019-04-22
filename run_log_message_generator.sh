@@ -3,26 +3,29 @@ class_name='com.cleverfishsoftware.utils.messagegenerator.RunLogMessageGenerator
 jar_name='log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar'
 
 log4j_properties="-Dlog4j.configuration=file:/path/to/log4j.properties"
-total_messages='10'
+total_messages='200'
 message_rate='2.0'
 error_rate_limit='0.05'
 params="$total_messages $message_rate $error_rate_limit"
 
 log_file_name="logs/app.log" #this needs to map to what is in the log-4j appender config
-if [ -f $log_file_name ]; then
-  prompt="The generated log file already exists. Do you want to delete it? (y/n): "
-  default_value="y"
-  read -e -p "$(echo -e $prompt)" -i $default_value response
-  if [ "$response" == 'y' ]; then
-    rm -fv $log_file_name
-  fi
-fi
+rm -fv $log_file_name
+sleep 1
+
+# if [ -f $log_file_name ]; then
+#   prompt="The generated log file already exists. Do you want to delete it? (y/n): "
+#   default_value="y"
+#   read -e -p "$(echo -e $prompt)" -i $default_value response
+#   if [ "$response" == 'y' ]; then
+#     rm -fv $log_file_name
+#   fi
+# fi
 
 skip_build=false
 for var in "$@"
 do
     echo "$var"
-    if  [ "$var" != "--skipBuild" ]; then
+    if  [ "$var" == "--skipBuild" ]; then
       skip_build=true
     fi
 done

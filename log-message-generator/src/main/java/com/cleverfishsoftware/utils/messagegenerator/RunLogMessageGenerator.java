@@ -6,7 +6,9 @@ import org.apache.logging.log4j.LogManager;
 import com.thedeanda.lorem.Lorem;
 import com.thedeanda.lorem.LoremIpsum;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -60,6 +62,7 @@ public class RunLogMessageGenerator {
         LogMessageRateLimiter rateLimiter = new LogMessageRateLimiter(rateLimit);
         float seconds = limit / rateLimit;
         Set<String> usedTrackingIds = new HashSet<>();
+        Map<String, Integer> counts = new HashMap<>();
         System.out.printf("generating %d log messages throttled at a rate of %.0f per second, with an error-rate of %.2f pct. it should take aproximately %.1f seconds to complete...\n\n", limit, rateLimit, errRateLimit, seconds);
         for (int i = 0; i < limit; i++) {
 
@@ -90,6 +93,8 @@ public class RunLogMessageGenerator {
                                     .log();
                         });
                         i++;
+                        Integer get = counts.get(randomLevelAsString);
+                        counts.put(randomLevelAsString, ((get != null) ? get : 0) + 1);
                     }
                     rateLimiter.execute(() -> {
                         try {
@@ -103,6 +108,8 @@ public class RunLogMessageGenerator {
                     });
                     errCnt++;
                     errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;
+                    Integer get = counts.get(LogMessage.Level.error.toString());
+                    counts.put(LogMessage.Level.error.toString(), ((get != null) ? get : 0) + 1);
                 } else {
                     i--; // don't count this iteration as nothing got logged
                 }
@@ -115,8 +122,11 @@ public class RunLogMessageGenerator {
                             .addTag("identifier", randomLevelAsString)
                             .log();
                 });
-
+                Integer get = counts.get(randomLevelAsString);
+                counts.put(randomLevelAsString, ((get != null) ? get : 0) + 1);
             }
+
+            System.out.printf("\rTotal: %d %s", i + 1, counts);
 
         }
 

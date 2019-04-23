@@ -23,13 +23,27 @@ checkpoint_dir="/spark/checkpoint"
 
 err_params="$broker_list $consumer_group_id_err $consumer_topic_name $producer_err_topic_name $checkpoint_dir"
 
-skip_build="$1"
-status=0
-if  [ "$skip_build" != "--skipBuild" ]; then
-  mvn --offline -f log-message-reducer/pom.xml package
-  status=$?
+
+skip_build=false
+for var in "$@"
+do
+    echo "$var"
+    if  [ "$var" == "--skipBuild" ]; then
+      skip_build=true
+    fi
+done
+
+build_status=0
+if  ! $skip_build
+then
+  mvn -f log-message-reducer/pom.xml package
+  build_status=$?
 fi
 
-if test $status -eq 0; then
-  spark-submit $driver_java_options --master $spark_cluster_address --jars $uber_jar --class $class_name_splitter_err $jar $err_params
+if test $build_status -ne 0; then
+  exit 1
 fi
+
+cmd="spark-submit $driver_java_options --master $spark_cluster_address --jars $uber_jar --class $class_name_splitter_err $jar $err_params"
+echo "$cmd"
+eval "$cmd"

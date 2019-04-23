@@ -56,21 +56,32 @@ object LogTopicSplitterErr {
       .option("startingOffsets", "earliest")
       .option("failOnDataLoss", "false")
       .load()
-      .selectExpr("CAST(value AS STRING)")
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
-    val ds = stream.flatMap(parseLog).select("level","dateTime","msg")
+    val ds = stream.selectExpr("CAST(value AS STRING)")
 
-    ds.filter($"level" === "ERROR")
-      .selectExpr("CAST(msg AS STRING) AS value")
+    val structured = ds.flatMap(parseLog).select("level","msg")
+
+    import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+    import scala.concurrent.duration._
+
+    ds
+      // .filter($"level" === "ERROR")
       .writeStream
-      .format("kafka")
-      .option("kafka.bootstrap.servers", brokers)
+      .format("console")
       .option("checkpointLocation",s"$checkpointDir/split/err")
-      .option("topic", producerErrTopic)
-      .outputMode("append")
       .start()
-      .awaitTermination()
+      .awaitTermination
+
+      // .selectExpr("CAST(msg AS STRING) AS value")
+      // .writeStream
+      // .format("kafka")
+      // .option("kafka.bootstrap.servers", brokers)
+      // .option("checkpointLocation",s"$checkpointDir/split/err")
+      // .option("topic", producerErrTopic)
+      // .outputMode("append")
+      // .start()
+      // .awaitTermination()
 
     spark.stop()
 

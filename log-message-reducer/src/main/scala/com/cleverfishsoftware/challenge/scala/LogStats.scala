@@ -48,11 +48,11 @@ object LogStats {
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", brokers)
+      .option("group.id",consumerGroupId)
       .option("subscribe", topic)
       .option("startingOffsets", "earliest")
       .option("failOnDataLoss", "false")
       .load()
-
 
     // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
     val ds = stream.selectExpr("CAST(value AS STRING)")

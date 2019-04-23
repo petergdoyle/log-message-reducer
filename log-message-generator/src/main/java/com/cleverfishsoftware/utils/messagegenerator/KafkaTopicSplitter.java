@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -15,6 +14,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.WakeupException;
 
 /**
  *
@@ -49,39 +49,43 @@ public class KafkaTopicSplitter {
         producerProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         Producer<String, String> producer = new KafkaProducer<>(producerProps);
 
-        Integer counter = 1;
+        Integer counter = 0;
         Map<String, Integer> counts = new HashMap<>();
 
         System.out.println("\n");
-        while (true) {
-            ConsumerRecords<String, String> records = consumer.poll(100);
-            for (ConsumerRecord<String, String> record : records) {
-                String value = record.value();
-                Matcher matcher = logPattern.matcher(value.trim());
-                if (matcher.matches()) {
-                    String level = matcher.group(2);
-                    switch (level) {
-                        case "ERROR":
-                            producer.send(new ProducerRecord("logs-stderr", value));
-                            Integer valErr = counts.get("STDERR");
-                            counts.put("STDERR", ((valErr != null) ? valErr : 0) + 1);
-                            break;
-                        default:
-                            producer.send(new ProducerRecord("logs-stdout", value));
-                            Integer valOut = counts.get("STDOUT");
-                            counts.put("STDOUT", ((valOut != null) ? valOut : 0) + 1);
+        try {
+            while (true) {
+                ConsumerRecords<String, String> records = consumer.poll(100);
+                for (ConsumerRecord<String, String> record : records) {
+                    String value = record.value();
+                    Matcher matcher = logPattern.matcher(value.trim());
+                    if (matcher.matches()) {
+                        String level = matcher.group(2);
+                        switch (level) {
+                            case "ERROR":
+                                producer.send(new ProducerRecord("logs-stderr", value));
+                                Integer valErr = counts.get("STDERR");
+                                counts.put("STDERR", ((valErr != null) ? valErr : 0) + 1);
+                                break;
+                            default:
+                                producer.send(new ProducerRecord("logs-stdout", value));
+                                Integer valOut = counts.get("STDOUT");
+                                counts.put("STDOUT", ((valOut != null) ? valOut : 0) + 1);
+                        }
+                    } else {
+                        System.err.printf("Cannot match the record: %s\n", value);
                     }
-                } else {
-                    System.err.printf("Cannot match the record: %s\n", value);
+                    counter++;
+                    System.out.printf("\r[INFO] Counter: %d Totals: %s", counter, counts);
                 }
-                counter++;
             }
-
-            System.out.printf("\r[INFO] Counter: %d Totals: %s", counter, counts);
+        } catch (WakeupException ex) {
+            // ignore 
+        } finally {
+            consumer.close();
+            producer.close();
         }
 
-//        consumer.close(); 
-//        producer.close();
     }
 
 }

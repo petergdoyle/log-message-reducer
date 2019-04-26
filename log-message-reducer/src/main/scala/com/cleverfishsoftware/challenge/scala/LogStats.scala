@@ -42,29 +42,22 @@ object LogStats {
       .getOrCreate() // recover session from checkpoint if necessary
 
     import spark.implicits._
-
-    // Create DataSet representing the stream of input lines from kafka
-    val stream = spark
-      .readStream
-      .format("kafka")
-      .option("kafka.bootstrap.servers", brokers)
-      .option("group.id",consumerGroupId)
-      .option("subscribe", topic)
-      .option("startingOffsets", "earliest")
-      .option("failOnDataLoss", "false")
-      .load()
-
-    // Convert our raw text into a DataSet of LogEntry rows, then just select the columns we care about
-    val ds = stream.selectExpr("CAST(value AS STRING)")
-
-    val structured = ds.flatMap(parseLog).select("level")
-
     import org.apache.spark.sql.streaming.{OutputMode, Trigger}
     import scala.concurrent.duration._
 
-    structured
-      .groupBy("level")
-      .count()
+    spark
+      .readStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("group.id",consumerGroupId)
+        .option("subscribe", topic)
+        .option("startingOffsets", "earliest")
+        .option("failOnDataLoss", "false")
+        .load()
+        .selectExpr("CAST(value AS STRING)")
+        .flatMap(parseLog).select("level")
+        .groupBy("level")
+        .count()
       .writeStream
         .format("console")
         .option("checkpointLocation",s"$checkpointDir/stats")

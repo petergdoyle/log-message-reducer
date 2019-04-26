@@ -12,7 +12,7 @@ object Utilities {
     // Case class defining structured data for a line of Apache access log data
     case class LogEntry(dateTime:String, level:String, thread:String, location:String, msg:String)
 
-    val sample_msg = "[22/Apr/2019:05:32:46 +0000] DEBUG [pool-2-thread-1] LogMessage.java:83 - {\"identifier\":\"debug\",\"trackId\":\"5b952441-878d-4cfe-828f-578b5a960d58\",\"body\":\"menandri viverra vel dissentiunt homero esse an reprehendunt labores aliquam habitasse perpetua dictas\"}"
+    val sample_msg = "[22/Apr/2019:05:32:46 +0000] DEBUG [pool-2-thread-1] LogMessage.java:83 - {\"level\":\"debug\",\"trackId\":\"5b952441-878d-4cfe-828f-578b5a960d58\",\"body\":\"menandri viverra vel dissentiunt homero esse an reprehendunt labores aliquam habitasse perpetua dictas\"}"
 
     def log4jLogPattern(): Pattern = {
       val regexx = "(\\[.+?\\])? (\\S+) (.+) (.+) - (.+)"

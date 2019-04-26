@@ -11,7 +11,7 @@ driver_java_options=$driver_java_options_quiet
 
 broker_list='localhost:9092'
 consumer_group_id="LogMessageReducer-cg"
-consumer_topic_std_out="logs"
+consumer_topic_std_out="logs-stdout"
 consumer_topic_std_err="logs-stderr"
 producer_topic_reduced="logs-reduced"
 checkpoint_dir="/spark/checkpoint"

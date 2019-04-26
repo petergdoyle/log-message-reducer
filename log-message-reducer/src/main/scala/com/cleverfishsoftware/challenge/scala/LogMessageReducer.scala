@@ -56,26 +56,44 @@ object LogMessageReducer {
       .add("body", DataTypes.StringType)
       .add("ts", DataTypes.StringType)
 
-    spark
+    val stdOutDf = spark
       .readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", brokers)
-        .option("subscribe", "logs-stdout")
+        .option("subscribe", consumerTopicStdOut)
         .option("startingOffsets", "latest")
         .option("failOnDataLoss", "false")
         .load()
         .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
-        .select(from_json($"value", struct) as("log")) // convert to json objects
-        /* aggregate and write to console */
-        .select("log.level") // select within the log construct
-        .groupBy("level") // count by level
-        .count()
+        .select(from_json($"value", struct) as("stdout")) // convert to json objects
+        .select("stdout.*")
+
+
+    val stdErrDf = spark
+      .readStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("subscribe", consumerTopicStdErr)
+        .option("startingOffsets", "latest")
+        .option("failOnDataLoss", "false")
+        .load()
+        .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
+        .select(from_json($"value", struct) as("stderr")) // convert to json objects
+        .select("stderr.*")
+
+
+    val joinedDf = stdErrDf.join(stdOutDf,"trackId")
+
+    joinedDf
       .writeStream
-        .outputMode(OutputMode.Complete) //all the rows are written to the output sink every time
-        .trigger(Trigger.ProcessingTime(5.seconds)) // 5 second watermark
         .format("console")
+        .option("checkpointLocation",s"$checkpointDir/reducer")
+        .option("truncate", false)
+        .trigger(Trigger.ProcessingTime(5.seconds))
+        .outputMode(OutputMode.Append)
         .start()
-        .awaitTermination()
+        .awaitTermination
+
 
 
     spark.stop()

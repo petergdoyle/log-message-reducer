@@ -55,16 +55,13 @@ public class LogMessage {
 
         private final HashMap<String, String> tags = new HashMap<>();
         private final String body;
-        private final String ts;
         private final Logger logger;
         private final Level level;
-        private final OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
 
         Builder(Logger logger, Level level, String body) {
             this.level = level;
             this.logger = logger;
             this.body = body;
-            ts = Instant.now().toString();
         }
 
         public Builder addTag(final String key, final String value) {
@@ -74,25 +71,24 @@ public class LogMessage {
 
         void log() {
             LogMessage msg = new LogMessage(this);
-            String serialized = serialize(msg);
             switch (level) {
                 case trace:
-                    logger.trace(serialized);
+                    logger.trace(serialize(msg));
                     break;
                 case debug:
-                    logger.debug(serialized);
+                    logger.debug(serialize(msg));
                     break;
                 case warn:
-                    logger.warn(serialized);
+                    logger.warn(serialize(msg));
                     break;
                 case info:
-                    logger.info(serialized);
+                    logger.info(serialize(msg));
                     break;
                 case error:
-                    logger.error(serialized);
+                    logger.error(serialize(msg));
                     break;
                 case fatal:
-                    logger.fatal(serialized);
+                    logger.fatal(serialize(msg));
                     break;
                 default:
                     throw new RuntimeException("this isn't supposed to fall thru");
@@ -101,9 +97,9 @@ public class LogMessage {
 
         private String serialize(LogMessage msg) {
             JSONObject obj = new JSONObject();
+            msg.tags.put("ts", OffsetDateTime.now(ZoneOffset.UTC).toString());
+            msg.tags.put("body", msg.body);
             msg.tags.forEach((k, v) -> obj.put(k, v));
-            obj.put("body", msg.body);
-//            obj.put("ts", utc);
             String str = obj.toJSONString();
             return str;
         }

@@ -15,6 +15,9 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  *
@@ -37,7 +40,7 @@ public class KafkaTopicSplitter {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
         consumer.subscribe(Arrays.asList("logs"));
 
-        // set up the producer 
+        // set up the producer
         Properties producerProps = new Properties();
         producerProps.put("bootstrap.servers", "localhost:9092");
         producerProps.put("acks", "all");
@@ -53,34 +56,57 @@ public class KafkaTopicSplitter {
         Map<String, Integer> counts = new HashMap<>();
 
         System.out.println("\n");
+        JSONParser parser = new JSONParser();
         try {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(100);
                 for (ConsumerRecord<String, String> record : records) {
                     String value = record.value();
+                    
+//                    try {
+//                        JSONObject json = (JSONObject) parser.parse(value);
+//                        String level  = (String) json.get("level");
+//                        String msg  = (String) json.get("message");
+//                        switch (level) {
+//                            case "ERROR":
+//                                producer.send(new ProducerRecord("logs-stderr", value));
+//                                Integer valErr = counts.get("STDERR");
+//                                counts.put("STDERR", ((valErr != null) ? valErr : 0) + 1);
+//                                break;
+//                            default:
+//                                producer.send(new ProducerRecord("logs-stdout", value));
+//                                Integer valOut = counts.get("STDOUT");
+//                                counts.put("STDOUT", ((valOut != null) ? valOut : 0) + 1);
+//                        }
+//                    } catch (ParseException ex) {
+//                        System.err.printf("Cannot parse the record: %s\n", value);
+//                    }
+
                     Matcher matcher = logPattern.matcher(value.trim());
                     if (matcher.matches()) {
                         String level = matcher.group(2);
+                        String msg = matcher.group(5); 
                         switch (level) {
                             case "ERROR":
-                                producer.send(new ProducerRecord("logs-stderr", value));
+                                producer.send(new ProducerRecord("logs-stderr", msg));
                                 Integer valErr = counts.get("STDERR");
                                 counts.put("STDERR", ((valErr != null) ? valErr : 0) + 1);
                                 break;
                             default:
-                                producer.send(new ProducerRecord("logs-stdout", value));
+                                producer.send(new ProducerRecord("logs-stdout", msg));
                                 Integer valOut = counts.get("STDOUT");
                                 counts.put("STDOUT", ((valOut != null) ? valOut : 0) + 1);
                         }
                     } else {
                         System.err.printf("Cannot match the record: %s\n", value);
                     }
+
                     counter++;
                     System.out.printf("\r[INFO] Counter: %d Totals: %s", counter, counts);
                 }
             }
         } catch (WakeupException ex) {
-            // ignore 
+            // ignore
         } finally {
             consumer.close();
             producer.close();

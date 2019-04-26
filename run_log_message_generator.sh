@@ -3,12 +3,12 @@ class_name='com.cleverfishsoftware.utils.messagegenerator.RunLogMessageGenerator
 jar_name='log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar'
 
 log4j_properties="-Dlog4j.configuration=file:/path/to/log4j.properties"
-total_messages='200'
-message_rate='2.0'
+total_messages='300'
+message_rate='20.0'
 error_rate_limit='0.05'
 params="$total_messages $message_rate $error_rate_limit"
 
-log_file_name="logs/app.log" #this needs to map to what is in the log-4j appender config
+log_file_name="logs/log.json" #this needs to map to what is in the log-4j appender config
 rm -fv $log_file_name
 sleep 1
 
@@ -22,18 +22,22 @@ sleep 1
 # fi
 
 skip_build=false
+clean=""
 for var in "$@"
 do
     echo "$var"
     if  [ "$var" == "--skipBuild" ]; then
       skip_build=true
     fi
+    if  [ "$var" == "--clean" ]; then
+      clean="clean"
+    fi
 done
 
 build_status=0
 if  ! $skip_build
 then
-  mvn -f log-message-generator/pom.xml package
+  mvn -f log-message-generator/pom.xml $clean package
   build_status=$?
 fi
 

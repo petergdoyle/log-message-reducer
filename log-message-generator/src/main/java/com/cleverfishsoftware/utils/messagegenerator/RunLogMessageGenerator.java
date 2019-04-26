@@ -89,7 +89,7 @@ public class RunLogMessageGenerator {
                         rateLimiter.execute(() -> {
                             new LogMessage.Builder(LOGGER, LogMessage.Level.valueOf(randomLevelAsString), lorem.getWords(randWordLenMin, randWordLenMax))
                                     .addTag("trackId", trackingId)
-                                    .addTag("identifier", randomLevelAsString)
+                                    .addTag("level", randomLevelAsString)
                                     .log();
                         });
                         i++;
@@ -101,13 +101,12 @@ public class RunLogMessageGenerator {
                             TimeUnit.MILLISECONDS.sleep(1500);
                             new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
                                     .addTag("trackId", trackingId)
-                                    .addTag("identifier", LogMessage.Level.error.toString())
+                                    .addTag("level", LogMessage.Level.error.toString())
                                     .log();
                         } catch (InterruptedException ex) {
                         }
                     });
                     errCnt++;
-                    errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;
                     Integer get = counts.get(LogMessage.Level.error.toString());
                     counts.put(LogMessage.Level.error.toString(), ((get != null) ? get : 0) + 1);
                 } else {
@@ -119,7 +118,7 @@ public class RunLogMessageGenerator {
                 rateLimiter.execute(() -> {
                     new LogMessage.Builder(LOGGER, LogMessage.Level.valueOf(randomLevelAsString), lorem.getWords(randWordLenMin, randWordLenMax))
                             .addTag("trackId", trackingId)
-                            .addTag("identifier", randomLevelAsString)
+                            .addTag("level", randomLevelAsString)
                             .log();
                 });
                 Integer get = counts.get(randomLevelAsString);

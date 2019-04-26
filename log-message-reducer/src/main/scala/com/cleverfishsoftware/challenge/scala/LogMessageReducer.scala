@@ -2,7 +2,6 @@ package com.cleverfishsoftware.challenge.scala
 
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
@@ -48,54 +47,36 @@ object LogMessageReducer {
 
     import spark.implicits._
     import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+    import org.apache.spark.sql.types.{DataTypes, StructType}
     import scala.concurrent.duration._
 
-    // Create DataSet representing the stream of input lines from kafka
+    val struct = new StructType()
+      .add("level", DataTypes.StringType)
+      .add("trackId", DataTypes.StringType)
+      .add("body", DataTypes.StringType)
+      .add("ts", DataTypes.StringType)
+
     spark
       .readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", brokers)
-        .option("subscribe", consumerTopicStdOut)
+        .option("subscribe", "logs-stdout")
         .option("startingOffsets", "latest")
         .option("failOnDataLoss", "false")
         .load()
-        .selectExpr("CAST(value AS STRING)")
-        .flatMap(parseLog)
-        .select("level","dateTime")
-        .groupBy("level")
+        .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
+        .select(from_json($"value", struct) as("log")) // convert to json objects
+        /* aggregate and write to console */
+        .select("log.level") // select within the log construct
+        .groupBy("level") // count by level
         .count()
-        .orderBy("level")
       .writeStream
-          .outputMode(OutputMode.Complete)
-          .format("console")
-          .start()
-          .awaitTermination()
+        .outputMode(OutputMode.Complete) //all the rows are written to the output sink every time
+        .trigger(Trigger.ProcessingTime(5.seconds)) // 5 second watermark
+        .format("console")
+        .start()
+        .awaitTermination()
 
-    // references for more advance aggregations:
-    // https://stackoverflow.com/questions/39505599/spark-dataframe-does-groupby-after-orderby-maintain-that-order
-
-    // // Create DataSet representing the stream of input lines from kafka
-    // val stdouts = spark
-    //   .readStream
-    //   .format("kafka")
-    //   .option("kafka.bootstrap.servers", brokers)
-    //   .option("subscribe", consumerOutTopic)
-    //   .option("startingOffsets", "earliest")
-    //   .option("failOnDataLoss", "false")
-    //   .load()
-    //   .selectExpr("CAST(value AS STRING)")
-
-
-    // ds.filter($"level" === "ERROR")
-    //   .selectExpr("CAST(msg AS STRING) AS value")
-    //   .writeStream
-    //   .format("kafka")
-    //   .option("kafka.bootstrap.servers", brokers)
-    //   .option("checkpointLocation",s"$checkpointDir/reduce")
-    //   .option("topic", producerReducedTopic)
-    //   .outputMode("append")
-    //   .start()
-    //   .awaitTermination()
 
     spark.stop()
 

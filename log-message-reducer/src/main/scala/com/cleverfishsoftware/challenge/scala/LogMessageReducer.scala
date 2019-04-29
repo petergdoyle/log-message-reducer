@@ -12,8 +12,6 @@ import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 
-import Utilities._
-
 object LogMessageReducer {
 
   def main(args: Array[String]) {
@@ -22,8 +20,8 @@ object LogMessageReducer {
         System.err.println("Usage: LogMessageReducer <brokers> <consumerGroupId> <consumer-topic-stdout> <consumer-topic-stderr> <producer-reduced-topic> <checkpointsDir>\n"
                 + "  <brokers> is a list of one or more Kafka brokers\n"
                 + "  <consumerGroupId> is a consumer group name to consume from topics\n"
-                + "  <onsumer-topic-stdout> the topic to listen for stdout messages\n"
-                + "  <onsumer-topic-stderr> the topic to listen for stderr messages\n"
+                + "  <consumer-topic-stdout> the topic to listen for stdout messages\n"
+                + "  <consumer-topic-stderr> the topic to listen for stderr messages\n"
                 + "  <producer-reduced-topic> the topic to put joined/reduced messages onto \n"
                 + "  <checkpointDir> the location for spark streaming checkpoints\n"
                 + "\n")
@@ -82,15 +80,21 @@ object LogMessageReducer {
         .select("stderr.*")
 
 
-    val joinedDf = stdErrDf.join(stdOutDf,"trackId")
+    val joinedDf = stdErrDf.alias("err").join(stdOutDf.alias("out"),Seq("trackId"))
+        // val joinedDf = stdErrDf.withWatermark(“eventTime1”, “10 seconds).join(stdOutDf,"trackId")
+        .select("err.trackId","out.level","out.body","out.ts")
+
 
     joinedDf
+      // .groupBy("trackId")
+      // .count()
       .writeStream
         .format("console")
         .option("checkpointLocation",s"$checkpointDir/reducer")
         .option("truncate", false)
         .trigger(Trigger.ProcessingTime(5.seconds))
         .outputMode(OutputMode.Append)
+        // .outputMode(OutputMode.Complete)
         .start()
         .awaitTermination
 

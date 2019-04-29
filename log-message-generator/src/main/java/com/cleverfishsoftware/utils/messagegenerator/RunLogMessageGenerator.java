@@ -129,7 +129,7 @@ public class RunLogMessageGenerator {
                 counts.put(randomLevelAsString, ((get != null) ? get : 0) + 1);
             }
 
-            System.out.printf("\r[INFO] Total: %d %s", i + 1, counts);
+            System.out.printf("\r[LogMessageGenerator] Total: %d %s", i + 1, counts);
             if (limit + 1 > Integer.MAX_VALUE) {
                 System.out.println("reached maximum iteration count");
                 System.exit(0);

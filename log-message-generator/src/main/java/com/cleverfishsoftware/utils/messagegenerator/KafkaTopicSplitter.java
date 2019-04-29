@@ -62,7 +62,7 @@ public class KafkaTopicSplitter {
                 ConsumerRecords<String, String> records = consumer.poll(100);
                 for (ConsumerRecord<String, String> record : records) {
                     String value = record.value();
-                    
+
 //                    try {
 //                        JSONObject json = (JSONObject) parser.parse(value);
 //                        String level  = (String) json.get("level");
@@ -85,7 +85,7 @@ public class KafkaTopicSplitter {
                     Matcher matcher = logPattern.matcher(value.trim());
                     if (matcher.matches()) {
                         String level = matcher.group(2);
-                        String msg = matcher.group(5); 
+                        String msg = matcher.group(5);
                         switch (level) {
                             case "ERROR":
                                 producer.send(new ProducerRecord("logs-stderr", msg));
@@ -102,7 +102,7 @@ public class KafkaTopicSplitter {
                     }
 
                     counter++;
-                    System.out.printf("\r[INFO] Counter: %d Totals: %s", counter, counts);
+                    System.out.printf("\r[KafkaTopicSplitter] Counter: %d Totals: %s", counter, counts);
                 }
             }
         } catch (WakeupException ex) {

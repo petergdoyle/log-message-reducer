@@ -31,7 +31,7 @@ public class RunLogMessageGenerator {
         } else {
             try {
                 limit = Integer.parseInt(args[0]);
-                if (limit <1) {
+                if (limit < 1) {
                     // assume run continously
                     limit = Integer.MAX_VALUE;
                 }
@@ -130,7 +130,10 @@ public class RunLogMessageGenerator {
             }
 
             System.out.printf("\r[INFO] Total: %d %s", i + 1, counts);
-
+            if (limit + 1 > Integer.MAX_VALUE) {
+                System.out.println("reached maximum iteration count");
+                System.exit(0);
+            }
         }
 
         rateLimiter.shutdown();

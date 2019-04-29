@@ -2,7 +2,7 @@
 <Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
     <Appenders>
         <Kafka name="kafka" topic="logs">
-            <Property name="bootstrap.servers">localhost:9092</Property>
+            <Property name="bootstrap.servers">engine2:9092</Property>
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
         </Kafka>
             <Kafka name="kafkaJson" topic="logs">

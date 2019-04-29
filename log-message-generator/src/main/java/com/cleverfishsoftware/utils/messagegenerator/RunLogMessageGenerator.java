@@ -31,6 +31,10 @@ public class RunLogMessageGenerator {
         } else {
             try {
                 limit = Integer.parseInt(args[0]);
+                if (limit <1) {
+                    // assume run continously
+                    limit = Integer.MAX_VALUE;
+                }
             } catch (Exception ex) {
                 error = true;
             }

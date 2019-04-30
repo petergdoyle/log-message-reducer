@@ -35,7 +35,7 @@ if [ $? -eq 127 ]; then
   eval "$cmd"
 
       export SCALA_HOME=$scala_home
-      cat <<EOF >>/etc/profile.d/scala.sh
+      cat <<EOF >/etc/profile.d/scala.sh
 export SCALA_HOME=$SCALA_HOME
 export PATH=\$PATH:\$SCALA_HOME/bin
 EOF

@@ -35,7 +35,7 @@ if [ $? -eq 127 ]; then
   eval "$cmd"
 
   export MAVEN_HOME=$maven_home
-  cat <<EOF >>/etc/profile.d/maven.sh
+  cat <<EOF >/etc/profile.d/maven.sh
 export MAVEN_HOME=$MAVEN_HOME
 export PATH=\$PATH:\$MAVEN_HOME/bin
 EOF

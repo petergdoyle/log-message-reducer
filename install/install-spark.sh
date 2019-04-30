@@ -42,7 +42,7 @@ if [ $? -eq 127 ]; then
   eval "$cmd"
 
       export SPARK_HOME=$spark_home
-      cat <<EOF >>/etc/profile.d/spark.sh
+      cat <<EOF >/etc/profile.d/spark.sh
 export SPARK_HOME=$SPARK_HOME
 export PATH=\$PATH:\$SPARK_HOME/bin
 EOF

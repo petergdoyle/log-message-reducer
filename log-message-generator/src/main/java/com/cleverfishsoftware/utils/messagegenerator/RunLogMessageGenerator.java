@@ -22,18 +22,19 @@ public class RunLogMessageGenerator {
     private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(RunLogMessageGenerator.class.getName());
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
-        int limit = 0;
+        int messageLimit = 0;
         float rateLimit = 0.0f;
         float errRateLimit = 0.f;
+        int errorDelayValue = 0;
         boolean error = false;
-        if (args == null || args.length == 0) {
+        if (args == null || args.length == 0 || args.length < 4) {
             error = true;
         } else {
             try {
-                limit = Integer.parseInt(args[0]);
-                if (limit < 1) {
+                messageLimit = Integer.parseInt(args[0]);
+                if (messageLimit < 1) {
                     // assume run continously
-                    limit = Integer.MAX_VALUE;
+                    messageLimit = Integer.MAX_VALUE;
                 }
             } catch (Exception ex) {
                 error = true;
@@ -48,12 +49,20 @@ public class RunLogMessageGenerator {
             } catch (Exception ex) {
                 error = true;
             }
+            try {
+                errorDelayValue = Integer.parseInt(args[3]);
+            } catch (Exception ex) {
+                error = true;
+            }
 
         }
         if (error) {
-            System.err.println("Usage RunLogMessageGenerator <size> <rate>\n"
-                    + "size - the number of messages to generate\n"
-                    + "rate - the rate per second to generate messages\n\n");
+            System.err.println("Usage RunLogMessageGenerator <message-limit> <message-rate> <error-rate-limit> <error-delay>\n"
+                    + "message-limit - the number of messages to generate (-1 to run continously)\n"
+                    + "message-rate - the rate per second to generate messages\n"
+                    + "error-rate-limit - the max pct of errors to generate relative to overall messages generated\n"
+                    + "error-delay - the number of milliseconds to delay the error message from being generated\n"
+                    + "\n");
             System.exit(1);
         }
         Lorem lorem = LoremIpsum.getInstance();
@@ -63,12 +72,18 @@ public class RunLogMessageGenerator {
         int relatedMsgCntMin = 2;
         int relatedMsgCntMax = 8;
         int errCnt = 0;
+        final Integer errorDelay = errorDelayValue;
         LogMessageRateLimiter rateLimiter = new LogMessageRateLimiter(rateLimit);
-        float seconds = limit / rateLimit;
+        float seconds = messageLimit / rateLimit;
         Set<String> usedTrackingIds = new HashSet<>();
         Map<String, Integer> counts = new HashMap<>();
-        System.out.printf("\n\n[INFO] generating %d log messages throttled at a rate of %.0f per second, with an error-rate of %.2f pct. it should take aproximately %.1f seconds to complete...\n\n", limit, rateLimit, errRateLimit, seconds);
-        for (int i = 0; i < limit; i++) {
+        System.out.printf("\n\n[INFO] generating %d log messages "
+                + "throttled at a rate of %.0f per second, "
+                + "with an error-rate of %.2f pct "
+                + "and an error delay of %d milliseconds. "
+                + "it should take aproximately %.1f "
+                + "seconds to complete...\n\n", messageLimit, rateLimit, errRateLimit, errorDelay, seconds);
+        for (int i = 0; i < messageLimit; i++) {
 
             final String trackingId = UUID.randomUUID().toString();
             if (usedTrackingIds.contains(trackingId)) {
@@ -102,7 +117,7 @@ public class RunLogMessageGenerator {
                     }
                     rateLimiter.execute(() -> {
                         try {
-                            TimeUnit.MILLISECONDS.sleep(1500);
+                            TimeUnit.MILLISECONDS.sleep(errorDelay);
                             new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
                                     .addTag("trackId", trackingId)
                                     .addTag("level", LogMessage.Level.error.toString())
@@ -130,7 +145,7 @@ public class RunLogMessageGenerator {
             }
 
             System.out.printf("\r[LogMessageGenerator] Total: %d %s", i + 1, counts);
-            if (limit + 1 > Integer.MAX_VALUE) {
+            if (messageLimit + 1 > Integer.MAX_VALUE) {
                 System.out.println("reached maximum iteration count");
                 System.exit(0);
             }

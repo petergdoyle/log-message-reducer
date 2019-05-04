@@ -18,29 +18,44 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.json.simple.parser.JSONParser;
 
 /**
- *
+ * Purpose: Read log4j formatted log messages from a Kafka topic, identify each
+ * message as either "error" or not, strip off the log4j information from the
+ * record and write the json body the appropriate stdout / stderr topic
  */
 public class LogMessageSplitter {
 
     public static void main(String[] args) {
 
         String brokerList = "";
+        String logsTopic = "";
+        String logsStdErrTopic = "";
+        String logsStdOutTopic = "";
         boolean error = false;
-        if (args == null || args.length == 0 || args.length < 1) {
+        if (args == null || args.length == 0 || args.length < 4) {
             error = true;
         } else {
             brokerList = args[0];
+            logsTopic = args[1];
+            logsStdErrTopic = args[2];
+            logsStdOutTopic = args[3];
         }
 
         if (error) {
-            System.err.println("Usage LogMessageSplitter <broker-list>\n"
+            System.err.println("Usage LogMessageSplitter <broker-list> <logs-topic> <logs-stderr-topic> <logs-stdout-topic>\n"
                     + "broker-list - the kafka brokers to bootstrap\n"
+                    + "logs-topic - the kafka topic name to read formatted log4j messages\n"
+                    + "logs-stderr-topic - the kafka topic to write errors to\n"
+                    + "logs-stdout-topic - the kafka topic to write non-errors to\n"
                     + "\n");
             System.exit(1);
         }
 
         String logRegex = "(\\[.+?\\])? (\\S+) (.+) (.+) - (.+)";
         Pattern logPattern = Pattern.compile(logRegex);
+        
+        String sampleLogMessage="{\"level\":\"trace\","
+                + "\"trackId\":\"a15c841c-5c34-4ceb-a56b-78cdee2dbfe1\","
+                + "\"body\":\"senectus definiebas tincidunt voluptaria aperiri nihil ea\",\"ts\":\"2019-05-04T10:03:45.983Z\"}";
 
         // set up the consumer
         Properties consumerProps = new Properties();
@@ -51,7 +66,7 @@ public class LogMessageSplitter {
         consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProps.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
-        consumer.subscribe(Arrays.asList("logs"));
+        consumer.subscribe(Arrays.asList(logsTopic));
 
         // set up the producer
         Properties producerProps = new Properties();
@@ -76,6 +91,7 @@ public class LogMessageSplitter {
                 for (ConsumerRecord<String, String> record : records) {
                     String value = record.value();
 
+// this code might be useful if the Log4J message itself is a JSON message with an escaped JSON body
 //                    try {
 //                        JSONObject json = (JSONObject) parser.parse(value);
 //                        String level  = (String) json.get("level");
@@ -94,18 +110,20 @@ public class LogMessageSplitter {
 //                    } catch (ParseException ex) {
 //                        System.err.printf("Cannot parse the record: %s\n", value);
 //                    }
+
+// this code is useful when the Log4j message takes more of a REGEX-parseable format with a JSON body 
                     Matcher matcher = logPattern.matcher(value.trim());
                     if (matcher.matches()) {
                         String level = matcher.group(2);
-                        String msg = matcher.group(5);
+                        String body = matcher.group(5);
                         switch (level) {
                             case "ERROR":
-                                producer.send(new ProducerRecord("logs-stderr", msg));
+                                producer.send(new ProducerRecord(logsStdErrTopic, body));
                                 Integer valErr = counts.get("STDERR");
                                 counts.put("STDERR", ((valErr != null) ? valErr : 0) + 1);
                                 break;
                             default:
-                                producer.send(new ProducerRecord("logs-stdout", msg));
+                                producer.send(new ProducerRecord(logsStdOutTopic, body));
                                 Integer valOut = counts.get("STDOUT");
                                 counts.put("STDOUT", ((valOut != null) ? valOut : 0) + 1);
                         }

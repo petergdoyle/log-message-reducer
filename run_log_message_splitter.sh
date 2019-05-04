@@ -24,7 +24,17 @@ if test $build_status -ne 0; then
 fi
 
 broker_list="engine1:9092"
-params="$broker_list"
+read -e -p "Enter the Kafka Broker list: " -i "$broker_list" broker_list
+logs_topic="logs"
+read -e -p "Enter the Kafka Logs Topic name to take from : " -i "$logs_topic" logs_topic
+logs_stderr_topic="logs-stderr"
+read -e -p "Enter the Kafka Logs Error Topic name to write to: " -i "$logs_stderr_topic" logs_stderr_topic
+logs_stdout_topic="logs-stdout"
+read -e -p "Enter the Kafka Logs Topic name to write to: " -i "$logs_stdout_topic" logs_stdout_topic
+
+params="$broker_list $logs_topic $logs_stderr_topic $logs_stdout_topic"
 
 cmd="java -cp $jar_name $class_name $params"
-echo "$cmd"
+echo -e "The following command will be run:\n$cmd"
+read -n 1 -s -r -p "Press any key to continue"
+eval "$cmd"

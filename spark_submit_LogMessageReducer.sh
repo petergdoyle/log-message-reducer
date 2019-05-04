@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
 class_name='com.cleverfishsoftware.challenge.scala.LogMessageReducer'
-
-spark_cluster_address='spark://log-message-reducer.cleverfishsoftware.com:7077'
 jar="$PWD/log-message-reducer/target/log-message-reducer-1.0-SNAPSHOT.jar"
 uber_jar="$PWD/log-message-reducer-uber-jar/target/log-message-reducer-uber-jar-1.0-SNAPSHOT-jar-with-dependencies.jar"
 driver_java_options_quiet='--driver-java-options "-Dlog4j.configuration=file:///vagrant/spark_log4j_QUIET.properties"'
 driver_java_options_default=''
 driver_java_options=$driver_java_options_quiet
 
-broker_list='localhost:9092'
+broker_list='engine2:9092'
 consumer_group_id="LogMessageReducer-cg"
 consumer_topic_std_out="logs-stdout"
 consumer_topic_std_err="logs-stderr"
@@ -41,6 +39,12 @@ then
   build_status=$?
 fi
 
+spark_cluster_address='spark://log-message-reducer.cleverfishsoftware.com:7077'
+mode_local=""
+mode_cluster="--deploy-mode cluster"
+deploy_mode=$mode_local
+
 if test $build_status -eq 0; then
-  spark-submit $driver_java_options --master $spark_cluster_address --jars $uber_jar --class $class_name $jar $params
+  cmd="spark-submit $driver_java_options --master $deploy_mode $spark_cluster_address --jars $uber_jar --class $class_name $jar $params"
+  echo "$cmd"
 fi

@@ -1,0 +1,14 @@
+version: '3'
+services:
+  log-message-generator-service:
+    image: cleverfishsoftware.com/log-message-generator
+    extra_hosts:
+    - "engine1:192.168.1.81"
+    - "engine2:192.168.1.82"
+    command: "java -Duser.timezone=UTC -cp log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar com.cleverfishsoftware.utils.messagegenerator.RunLogMessageGenerator -1 20.0 0.05 1500"
+  log-message-topic-splitter-service:
+    image: cleverfishsoftware.com/log-message-generator
+    extra_hosts:
+    - "engine1:192.168.1.81"
+    - "engine2:192.168.1.82"
+    command: "java -cp log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar com.cleverfishsoftware.utils.messagegenerator.LogMessageSplitter localhost:9092"

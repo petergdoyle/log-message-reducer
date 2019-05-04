@@ -15,24 +15,37 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  *
  */
-public class KafkaTopicSplitter {
+public class LogMessageSplitter {
 
     public static void main(String[] args) {
+
+        String brokerList = "";
+        boolean error = false;
+        if (args == null || args.length == 0 || args.length < 1) {
+            error = true;
+        } else {
+            brokerList = args[0];
+        }
+
+        if (error) {
+            System.err.println("Usage LogMessageSplitter <broker-list>\n"
+                    + "broker-list - the kafka brokers to bootstrap\n"
+                    + "\n");
+            System.exit(1);
+        }
 
         String logRegex = "(\\[.+?\\])? (\\S+) (.+) (.+) - (.+)";
         Pattern logPattern = Pattern.compile(logRegex);
 
         // set up the consumer
         Properties consumerProps = new Properties();
-        consumerProps.put("bootstrap.servers", "localhost:9092");
-        consumerProps.put("group.id", "KafkaTopicSplitter-cg");
+        consumerProps.put("bootstrap.servers", brokerList);
+        consumerProps.put("group.id", "LogMessageSplitter-cg");
         consumerProps.put("enable.auto.commit", "true");
         consumerProps.put("auto.commit.interval.ms", "1000");
         consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -42,7 +55,7 @@ public class KafkaTopicSplitter {
 
         // set up the producer
         Properties producerProps = new Properties();
-        producerProps.put("bootstrap.servers", "localhost:9092");
+        producerProps.put("bootstrap.servers", brokerList);
         producerProps.put("acks", "all");
         producerProps.put("retries", 0);
         producerProps.put("batch.size", 16384);
@@ -81,7 +94,6 @@ public class KafkaTopicSplitter {
 //                    } catch (ParseException ex) {
 //                        System.err.printf("Cannot parse the record: %s\n", value);
 //                    }
-
                     Matcher matcher = logPattern.matcher(value.trim());
                     if (matcher.matches()) {
                         String level = matcher.group(2);

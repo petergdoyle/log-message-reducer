@@ -16,10 +16,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  */
-public class RunLogMessageGenerator {
+public class LogMessageGenerator {
 
     // each class must declare it's own logger and pass it to the LogBuilder or else we lose class level log scope
-    private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(RunLogMessageGenerator.class.getName());
+    private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(LogMessageGenerator.class.getName());
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
         int messageLimit = 0;
@@ -57,7 +57,7 @@ public class RunLogMessageGenerator {
 
         }
         if (error) {
-            System.err.println("Usage RunLogMessageGenerator <message-limit> <message-rate> <error-rate-limit> <error-delay>\n"
+            System.err.println("Usage LogMessageGenerator <message-limit> <message-rate> <error-rate-limit> <error-delay>\n"
                     + "message-limit - the number of messages to generate (-1 to run continously)\n"
                     + "message-rate - the rate per second to generate messages\n"
                     + "error-rate-limit - the max pct of errors to generate relative to overall messages generated\n"

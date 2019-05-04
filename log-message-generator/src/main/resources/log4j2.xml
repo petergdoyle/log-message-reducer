@@ -2,35 +2,35 @@
 <Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
     <Appenders>
         <Kafka name="kafka" topic="logs">
-            <Property name="bootstrap.servers">localhost:9092</Property>
+            <Property name="bootstrap.servers">engine2:9092</Property>
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
         </Kafka>
-            <Kafka name="kafkaJson" topic="logs">
-                <Property name="bootstrap.servers">localhost:9092</Property>
-                <!-- <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/> -->
+            <!-- <Kafka name="kafkaJson" topic="logs">
+                <Property name="bootstrap.servers">engine2:9092</Property>
+                <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
                     <JSONLayout complete="false" compact="false"/>
-            </Kafka>
-        <Async name="asyncKafka">
+            </Kafka> -->
+        <!-- <Async name="asyncKafka">
             <AppenderRef ref="kafka"/>
-        </Async>
+        </Async> -->
 
-        <Console name="stdout" target="SYSTEM_OUT">
+        <!-- <Console name="stdout" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
-        </Console>
+        </Console> -->
 
-        <File name="oneFile" fileName="logs/app.log">
+        <!-- <File name="oneFile" fileName="logs/app.log">
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
-        </File>
-        <File name="jsonFile" fileName="logs/log.json">
+        </File> -->
+        <!-- <File name="jsonFile" fileName="logs/log.json">
             <JSONLayout complete="false" compact="false">
                 <KeyValuePair key="timestamp" value="$${date:yyyy-MM-dd'T'HH:mm:ss.SSSZ}" />
             </JSONLayout>
-        </File>
-        <Async name="asyncOneFile">
+        </File> -->
+        <!-- <Async name="asyncOneFile">
             <AppenderRef ref="oneFile"/>
-        </Async>
+        </Async> -->
 
-        <RollingFile
+        <!-- <RollingFile
             name="rollingFile"
             fileName="logs/application.log"
             filePattern="logs/application.%i.log.gz"
@@ -40,7 +40,7 @@
                 <SizeBasedTriggeringPolicy size="10MB" />
             </Policies>
             <DefaultRolloverStrategy max="5" />
-        </RollingFile>
+        </RollingFile> -->
 
     </Appenders>
     <Loggers>

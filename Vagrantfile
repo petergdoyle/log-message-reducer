@@ -33,6 +33,36 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
 
+  # install docker and docker-compose
+
+  eval 'docker --version' > /dev/null 2>&1
+  if [ $? -eq 127 ]; then
+    echo "installing docker and docker-compose..."
+
+    yum -y remove docker docker-common  docker-selinux docker-engine
+    yum -y install yum-utils device-mapper-persistent-data lvm2
+    yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    rm -fr /etc/yum.repos.d/docker.repo
+    yum-config-manager --enable docker-ce-edge
+    yum-config-manager --enable docker-ce-test
+    yum -y makecache fast
+    yum -y install docker-ce
+
+    systemctl start docker
+    systemctl enable docker
+    groupadd docker
+
+    yum -y install python-pip
+    pip install --upgrade pip
+    pip install -U docker-compose
+
+    usermod -aG docker vagrant
+
+  else
+    echo "docker and docker-compose already installed"
+  fi
+
+  # install kafka-proxied for kafka setup and run scripts
   if [ ! -d "/vagrant/kafka-proxied" ]; then
     cd /vagrant
     git clone https://github.com/petergdoyle/kafka-proxied.git
@@ -126,6 +156,7 @@ EOF
   if [ $? -eq 127 ]; then
 
     spark_home="/usr/spark/default"
+    # download_url="https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz"
     download_url="http://apache.mirrors.hoobly.com/spark/spark-2.4.2/spark-2.4.2-bin-hadoop2.7.tgz"
 
     if [ ! -d /usr/spark ]; then

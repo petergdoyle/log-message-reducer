@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-class_name='com.cleverfishsoftware.utils.messagegenerator.RunLogMessageGenerator'
+class_name='com.cleverfishsoftware.utils.messagegenerator.LogMessageGenerator'
 jar_name='log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar'
 log4j_properties="-Dlog4j.configuration=file:/path/to/log4j.properties"
 
@@ -18,8 +18,8 @@ fi
 
 skip_build=false
 clean=""
-message_limit='-1' # run continously
-message_rate='20.0' # 20 mps
+message_limit='200000' # run continously
+message_rate='100.0' # 20 mps
 error_rate_limit='0.05' # 5 pct error rate
 error_delay="1500" # 1.5 second error message delay
 
@@ -49,7 +49,7 @@ fi
 
 cmd="time java -Duser.timezone=UTC -cp $jar_name $class_name $params"
 echo "$cmd"
-eval "$cmd"
+# eval "$cmd"
 
 # if [ $? -eq 0 ]; then
 #   if [ -f $log_file_name ] && [ -s $log_file_name ]; then

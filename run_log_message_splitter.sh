@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-class_name='com.cleverfishsoftware.utils.messagegenerator.KafkaTopicSplitter'
+class_name='com.cleverfishsoftware.utils.messagegenerator.LogMessageSplitter'
 jar_name='log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar'
 
 skip_build=false
@@ -23,4 +23,8 @@ if test $build_status -ne 0; then
   exit 1
 fi
 
-java -cp $jar_name $class_name
+broker_list="engine1:9092"
+params="$broker_list"
+
+cmd="java -cp $jar_name $class_name $params"
+echo "$cmd"

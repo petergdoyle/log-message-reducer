@@ -11,3 +11,5 @@ nbactions.xml
 *zip
 log.json
 scratch
+*.cmd
+docker-compose.yml

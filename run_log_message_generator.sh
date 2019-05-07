@@ -25,6 +25,20 @@ do
     fi
 done
 
+cp -v log-message-generator/src/main/resources/log4j2.xml log-message-generator/src/main/resources/log4j2.tmp
+broker_list="localhost:9092" # this has to match what is in the log4j2 file
+read -e -p "[LogMessageGenerator] Enter the Kafka Broker list: " -i "$broker_list" broker_list
+sed -i "s/<Property name=\"bootstrap.servers\">\(.*\)<\/Property>/<Property name=\"bootstrap.servers\">$broker_list<\/Property>/g" log-message-generator/src/main/resources/log4j2.xml
+logs_topic="logs" # this has to match what is in the log4j2 file
+read -e -p "[LogMessageGenerator] Enter the Kafka Logs Topic name to take from : " -i "$logs_topic" logs_topic
+sed -i "s/<Kafka name=\"kafka\" topic=\"\(.*\)\">/<Kafka name=\"kafka\" topic=\"$logs_topic\">/g" log-message-generator/src/main/resources/log4j2.xml
+diff log-message-generator/src/main/resources/log4j2.xml log-message-generator/src/main/resources/log4j2.tmp > /dev/null 2>&1
+if [ $? -eq 1 ]; then\
+  echo -e "A build is required to make these changes..."
+  sleep 1
+  skip_build=false
+fi
+
 build_status=0
 if  ! $skip_build
 then

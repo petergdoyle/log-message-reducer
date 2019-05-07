@@ -13,3 +13,4 @@ log.json
 scratch
 *.cmd
 docker-compose.yml
+*.tmp

@@ -34,7 +34,7 @@ regex_port="[0-9]{4,5}"
 regex_pattern="$regex_hostname_or_ip:$regex_port"
 regex_matches=$(egrep -ohr "$regex_hostname_or_ip:$regex_port" log-message-generator/src log-message-generator/*cmd |sort -u)
 if [ "${#regex_matches[@]}" -gt 0 ]; then
-  echo -e "There are references to hostnames and ports in the source code that may need to be resolved: \n$regex_matches"
+  echo -e "There are references to hostnames in the generated runtime artifacts that may need to be resolved for containers to reach them: \n$regex_matches"
   response="y"
   read -e -p "Proceed(y/n)? " -i "$response" response
   if [ "$response" == "y" ]; then
@@ -44,7 +44,11 @@ if [ "${#regex_matches[@]}" -gt 0 ]; then
       read -e -p "How about $hostname? What is the Ip number?: " -i "$ip" ip
       sed -i "/extra_hosts:/a - \"$hostname:$ip\"" log-message-generator/docker-compose.yml
     done
-    sed -i "s/^-/    -/g" log-message-generator/docker-compose.yml # align the just-added references
+    sed -i "s/^-/    -/g" log-message-generator/docker-compose.yml # align the just-added references by adding some spaces
   fi
 fi
 docker build -t=cleverfishsoftware.com/log-message-generator log-message-generator/
+
+docker-compose -f log-message-generator/docker-compose.yml up -d
+
+docker ps -a  

@@ -27,7 +27,7 @@ if test $build_status -ne 0; then
   exit 1
 fi
 
-broker_list="engine1:9092"
+broker_list="localhost:9092"
 read -e -p "[LogMessageSplitter] Enter the Kafka Broker list: " -i "$broker_list" broker_list
 logs_topic="logs"
 read -e -p "[LogMessageSplitter] Enter the Kafka Logs Topic name to take from : " -i "$logs_topic" logs_topic

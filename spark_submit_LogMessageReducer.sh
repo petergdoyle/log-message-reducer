@@ -51,5 +51,7 @@ fi
 
 if test $build_status -eq 0; then
   cmd="spark-submit $driver_java_options --master $deploy_mode $spark_cluster_master_address --supervise  --jars $uber_jar --class $class_name $jar $params"
-  echo "$cmd"
+  echo -e "The following command will be run:\n$cmd"
+  read -n 1 -s -r -p "Press any key to continue"
+  eval "time $cmd"
 fi

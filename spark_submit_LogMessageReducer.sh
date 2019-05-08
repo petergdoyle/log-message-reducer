@@ -17,11 +17,25 @@ consumer_topic_std_err="logs-stderr"
 read -e -p "[LogMessageReducer] Enter the topic name for STDERR messages: " -i "$consumer_topic_std_err" consumer_topic_std_err
 producer_topic_reduced="logs-reduced"
 read -e -p "[LogMessageReducer] Enter the topic name for the Joined messages: " -i "$producer_topic_reduced" producer_topic_reduced
+
 checkpoint_dir="/spark/checkpoint"
+if [ "$(ls -A $checkpoint_dir)" ]; then
+  prompt="The Spark checkpoint directory is not empty. Do you want to delete it? (y/n): "
+  default_value="y"
+  read -e -p "$(echo -e $prompt)" -i $default_value response
+  if [ "$response" == 'y' ]; then
+    sudo rm -frv $checkpoint_dir/*
+  fi
+fi
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 
 params="$broker_list $consumer_group_id $consumer_topic_std_out $consumer_topic_std_err $producer_topic_reduced $checkpoint_dir"
 
-spark_cluster_master_address='spark://log-message-reducer.cleverfishsoftware.com:7077'
+local_ip_address=$(ifconfig |egrep 'inet\W' |grep -v '127.0.0.1' | awk '{print $2}')
+spark_cluster_master_address="spark://$local_ip_address:7077"
 read -e -p "[LogMessageReducer] Enter spark url for the Spark Master Node: " -i "$spark_cluster_master_address" spark_cluster_master_address
 
 mode_cluster="--deploy-mode cluster"

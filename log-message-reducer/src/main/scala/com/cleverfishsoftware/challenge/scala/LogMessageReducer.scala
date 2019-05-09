@@ -96,8 +96,6 @@ object LogMessageReducer {
       //   // .outputMode(OutputMode.Complete)
       //   .start()
       //   .awaitTermination
-        .select(to_json() as msg)
-        .selectExpr("CAST(msg AS STRING) AS value")
         .writeStream
         .format("kafka")
         .option("kafka.bootstrap.servers", brokers)

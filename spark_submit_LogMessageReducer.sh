@@ -20,6 +20,23 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+skip_build=false
+for var in "$@"
+do
+    echo "$var"
+    if  [ "$var" != "--skipBuild" ]; then
+      skip_build=true
+    fi
+done
+
+build_status=0
+if  ! $skip_build
+then
+  mvn --offline -f log-message-reducer/pom.xml package
+  build_status=$?
+fi
+
+
 broker_list="localhost:9092" # this has to match what is in the log4j2 file
 read -e -p "[LogMessageReducer] Enter the Kafka Broker list: " -i "$broker_list" broker_list
 consumer_group_id="LogMessageReducer-cg"
@@ -42,22 +59,6 @@ deploy_mode_value="local"
 read -e -p "[LogMessageReducer] Enter spark deployment mode (local/cluster) to run the Driver Program: " -i "$deploy_mode_value" deploy_mode_value
 if [ "deploy_mode_value" == "cluster" ]; then
   deploy_mode="mode_cluster"
-fi
-
-skip_build=false
-for var in "$@"
-do
-    echo "$var"
-    if  [ "$var" != "--skipBuild" ]; then
-      skip_build=true
-    fi
-done
-
-build_status=0
-if  ! $skip_build
-then
-  mvn --offline -f log-message-reducer/pom.xml package
-  build_status=$?
 fi
 
 

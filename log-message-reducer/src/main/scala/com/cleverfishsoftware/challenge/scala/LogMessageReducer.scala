@@ -84,19 +84,29 @@ object LogMessageReducer {
         // val joinedDf = stdErrDf.withWatermark(“eventTime1”, “10 seconds).join(stdOutDf,"trackId")
         .select("err.trackId","out.level","out.body","out.ts")
 
-
     joinedDf
       // .groupBy("trackId")
       // .count()
-      .writeStream
-        .format("console")
-        .option("checkpointLocation",s"$checkpointDir/reducer")
-        .option("truncate", false)
-        .trigger(Trigger.ProcessingTime(5.seconds))
-        .outputMode(OutputMode.Append)
-        // .outputMode(OutputMode.Complete)
+      // .writeStream
+      //   .format("console")
+      //   .option("checkpointLocation",s"$checkpointDir/reducer")
+      //   .option("truncate", false)
+      //   .trigger(Trigger.ProcessingTime(5.seconds))
+      //   .outputMode(OutputMode.Append)
+      //   // .outputMode(OutputMode.Complete)
+      //   .start()
+      //   .awaitTermination
+        .select(to_json() as msg)
+        .selectExpr("CAST(msg AS STRING) AS value")
+        .writeStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("checkpointLocation",s"$checkpointDir/split/err")
+        .option("topic", producerErrTopic)
+        .outputMode("append")
         .start()
-        .awaitTermination
+        .awaitTermination()
+
 
 
 

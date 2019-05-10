@@ -26,7 +26,7 @@ do
 done
 
 log4j2_appenders=("stdout" "kafka" "file")
-log4j2_appender="${log4j2_appenders[0]}"
+log4j2_appender="${log4j2_appenders[1]}"
 read -e -p "[LogMessageGenerator] Specify Log4j Appender ('stdout'/'kafka'/'file'): " -i "$log4j2_appender" log4j2_appender
 if [[ ! " ${log4j2_appenders[@]} " =~ " ${log4j2_appender} " ]]; then
   read -e -p "[LogMessageGenerator] Invalid entry. Specify Log4j Appender ('stdout'/'kafka'/'file'): " -i "$log4j2_appender" log4j2_appender

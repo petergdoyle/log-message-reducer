@@ -32,7 +32,7 @@ sed -i "s#-cp log-message-generator#-cp /log-message-generator#g" log-message-ge
 regex_hostname_or_ip="(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])"
 regex_port="[0-9]{4,5}"
 regex_pattern="$regex_hostname_or_ip:$regex_port"
-regex_matches=$(egrep -ohr "$regex_pattern" log-message-generator/src log-message-generator/*cmd |sort -u)
+regex_matches=$(egrep -ohr "$regex_pattern" log-message-generator/*cmd log-message-generator/src/main/resources/log4j2.xml |sort -u)
 if [ "${#regex_matches[@]}" -gt 0 ]; then
   echo -e "There are references to hostnames in the generated runtime artifacts that may need to be resolved for containers to reach them: \n$regex_matches"
   response="y"
@@ -45,6 +45,8 @@ if [ "${#regex_matches[@]}" -gt 0 ]; then
       sed -i "/extra_hosts:/a - \"$hostname:$ip\"" log-message-generator/docker-compose.yml
     done
     sed -i "s/^-/    -/g" log-message-generator/docker-compose.yml # align the just-added references by adding some spaces
+  else
+    sed -i '/extra_hosts:/d' log-message-generator/docker-compose-template.yml # remove unnecssary hosts mapping 
   fi
 fi
 docker build -t=cleverfishsoftware.com/log-message-generator log-message-generator/

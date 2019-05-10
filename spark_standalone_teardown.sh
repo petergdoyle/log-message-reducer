@@ -13,7 +13,7 @@ log_file="$SPARK_HOME/logs/spark-vagrant-org.apache.spark.deploy.master.Master-1
 rm -v $log_file
 
 
-checkpoint_dir='/spark/checkpoint'
+checkpoint_dir="/tmp/spark/checkpoint" 
 if [ ! "$(ls -A $checkpoint_dir)" ]; then
   echo "The Spark checkpoint directory is empty";
 else

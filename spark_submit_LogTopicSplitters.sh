@@ -16,14 +16,14 @@ consumer_group_id_out="LogTopicSplitterOut-cg"
 consumer_topic_name="logs"
 producer_err_topic_name="logs-stderr"
 producer_out_topic_name="logs-stdout"
-checkpoint_dir="/spark/checkpoint"
+checkpoint_dir="/tmp/spark/checkpoint"
 
-    # val brokers=args(0)
-    # val consumerGroupId=args(1)
-    # val consumerTopic=args(2)
-    # val producerErrTopic=args(3)
-    # val producerOutTopic=args(4)
-    # val checkpointDir=args(5)
+# val brokers=args(0)
+# val consumerGroupId=args(1)
+# val consumerTopic=args(2)
+# val producerErrTopic=args(3)
+# val producerOutTopic=args(4)
+# val checkpointDir=args(5)
 
 err_params="$broker_list $consumer_group_id $consumer_group_id_err $producer_err_topic_name $producer_err_topic_name $checkpoint_dir"
 out_params="$broker_list $consumer_group_id $consumer_group_id_out $producer_err_topic_name $producer_out_topic_name $checkpoint_dir"

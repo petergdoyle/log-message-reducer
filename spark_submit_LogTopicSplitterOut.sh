@@ -13,13 +13,13 @@ broker_list='localhost:9092'
 consumer_group_id_out="LogTopicSplitterOut-cg"
 consumer_topic_name="logs"
 producer_out_topic_name="logs-stdout"
-checkpoint_dir="/spark/checkpoint"
+checkpoint_dir="/tmp/spark/checkpoint"
 
-    # val brokers=args(0)
-    # val consumerGroupId=args(1)
-    # val consumerTopic=args(2)
-    # val producerOutTopic=args(3)
-    # val checkpointDir=args(4)
+# val brokers=args(0)
+# val consumerGroupId=args(1)
+# val consumerTopic=args(2)
+# val producerOutTopic=args(3)
+# val checkpointDir=args(4)
 
 out_params="$broker_list $consumer_group_id $consumer_group_id_out $producer_out_topic_name $checkpoint_dir"
 

@@ -47,9 +47,9 @@ export SPARK_HOME=$SPARK_HOME
 export PATH=\$PATH:\$SPARK_HOME/bin
 EOF
   # spark nodes need a checkpoint directory to keep state should a node go down
-  if [ ! -d "/spark/checkpoint" ]; then
-    mkdir -pv "/spark/checkpoint"
-    chmod ugo+rw "/spark/checkpoint/"
+  if [ ! -d "/tmp/spark/checkpoint" ]; then
+    mkdir -pv "/tmp/spark/checkpoint"
+    chmod ugo+rw "/tmp/spark/checkpoint/"
   fi
 
   # spark nodes need a logs directory

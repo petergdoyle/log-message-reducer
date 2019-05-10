@@ -99,8 +99,8 @@ object LogMessageReducer {
         .writeStream
         .format("kafka")
         .option("kafka.bootstrap.servers", brokers)
-        .option("checkpointLocation",s"$checkpointDir/split/err")
-        .option("topic", producerErrTopic)
+        .option("checkpointLocation",s"$checkpointDir/reduce")
+        .option("topic", producerReducedTopic)
         .outputMode("append")
         .start()
         .awaitTermination()

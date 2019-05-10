@@ -7,7 +7,7 @@ driver_java_options_quiet="--driver-java-options \"-Dlog4j.configuration=file://
 driver_java_options_default=''
 driver_java_options=$driver_java_options_quiet
 
-checkpoint_dir="/spark/checkpoint"
+checkpoint_dir="/tmp/spark/checkpoint"
 if [ "$(ls -A $checkpoint_dir)" ]; then
   prompt="The Spark checkpoint directory is not empty. Do you want to delete it? (y/n): "
   default_value="y"
@@ -36,6 +36,9 @@ then
   build_status=$?
 fi
 
+if test $build_status -ne 0; then
+  exit 1
+fi
 
 broker_list="localhost:9092" # this has to match what is in the log4j2 file
 read -e -p "[LogMessageReducer] Enter the Kafka Broker list: " -i "$broker_list" broker_list
@@ -49,8 +52,11 @@ producer_topic_reduced="logs-reduced"
 read -e -p "[LogMessageReducer] Enter the topic name for the Joined messages: " -i "$producer_topic_reduced" producer_topic_reduced
 params="$broker_list $consumer_group_id $consumer_topic_std_out $consumer_topic_std_err $producer_topic_reduced $checkpoint_dir"
 
-local_ip_address=$(ifconfig |egrep 'inet\W' |grep -v '127.0.0.1' | awk '{print $2}')
-spark_cluster_master_address="spark://$local_ip_address:7077"
+spark_cluster_master_name=$(cat /usr/spark/default/conf/spark-cluster.info |grep MASTER_NODE_NAME| cut -d "=" -f 2)
+if [ $spark_cluster_master_name == "" ]; then
+  spark_cluster_master_name="localhost"
+fi
+spark_cluster_master_address="spark://$spark_cluster_master_name:7077"
 read -e -p "[LogMessageReducer] Enter spark url for the Spark Master Node: " -i "$spark_cluster_master_address" spark_cluster_master_address
 
 mode_cluster="--deploy-mode cluster"
@@ -61,10 +67,7 @@ if [ "deploy_mode_value" == "cluster" ]; then
   deploy_mode="mode_cluster"
 fi
 
-
-if test $build_status -eq 0; then
-  cmd="spark-submit $driver_java_options --master $deploy_mode $spark_cluster_master_address --supervise  --jars $uber_jar --class $class_name $jar $params"
-  echo -e "The following command will be run:\n$cmd"
-  read -n 1 -s -r -p "Press any key to continue"
-  eval "time $cmd"
-fi
+cmd="spark-submit $driver_java_options --master $deploy_mode $spark_cluster_master_address --supervise  --jars $uber_jar --class $class_name $jar $params"
+echo -e "The following command will be run:\n$cmd"
+read -n 1 -s -r -p "Press any key to continue"
+eval "time $cmd"

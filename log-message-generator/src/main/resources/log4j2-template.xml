@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
     <Appenders>
-        <Kafka name="kafka" topic="logs-spark">
+        <!-- <Kafka name="kafka" topic="logs-spark">
             <Property name="bootstrap.servers">localhost:9092</Property>
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
-        </Kafka>
-            <!-- <Kafka name="kafkaJson" topic="logs">
-                <Property name="bootstrap.servers">kafka_workernode_1:9092</Property>
-                <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
-                    <JSONLayout complete="false" compact="false"/>
-            </Kafka> -->
+        </Kafka> -->
+        <!-- <Kafka name="kafkaJson" topic="logs">
+            <Property name="bootstrap.servers">kafka_workernode_1:9092</Property>
+            <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
+                <JSONLayout complete="false" compact="false"/>
+        </Kafka> -->
         <!-- <Async name="asyncKafka">
             <AppenderRef ref="kafka"/>
         </Async> -->
 
-        <!-- <Console name="stdout" target="SYSTEM_OUT">
+        <Console name="stdout" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
-        </Console> -->
+        </Console>
 
         <!-- <File name="oneFile" fileName="logs/app.log">
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
@@ -46,11 +46,11 @@
     <Loggers>
         <Root level="TRACE">
             <!-- append to kafka -->
-            <AppenderRef ref="kafka"/>
+            <!-- <AppenderRef ref="kafka"/> -->
             <!-- append to console as well-->
             <!-- <AppenderRef ref="stdout"/> -->
             <!-- <AppenderRef ref="jsonFile"/> -->
-            <!--<AppenderRef ref="stdout"/>-->
+            <AppenderRef ref="stdout"/>
             <!-- <AppenderRef ref="rollingFile"/> -->
             <!-- <AppenderRef ref="AsyncFile"/> -->
         </Root>

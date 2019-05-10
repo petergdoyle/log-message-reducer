@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
+    <Appenders>
+        <File name="oneFile" fileName="logs/stdout.log">
+            <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
+        </File>
+         <Async name="asyncOneFile">
+            <AppenderRef ref="oneFile"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="TRACE">
+            <AppenderRef ref="asyncOneFile"/>
+        </Root>
+        <Logger name="org.apache.kafka" level="WARN" />
+    </Loggers>
+</Configuration>

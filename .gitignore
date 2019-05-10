@@ -14,3 +14,4 @@ scratch
 *.cmd
 docker-compose.yml
 *.tmp
+log4j2.xml

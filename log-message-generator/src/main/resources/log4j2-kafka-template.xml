@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
+    <Appenders>
+        <Kafka name="kafka" topic="logs-spark">
+            <Property name="bootstrap.servers">localhost:9092</Property>
+            <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
+        </Kafka>
+        <Async name="asyncKafka">
+            <AppenderRef ref="kafka"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="TRACE">
+            <AppenderRef ref="asyncKafka"/>
+        </Root>
+        <Logger name="org.apache.kafka" level="WARN" />
+    </Loggers>
+</Configuration>

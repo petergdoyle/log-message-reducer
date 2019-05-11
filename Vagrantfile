@@ -156,8 +156,7 @@ EOF
   if [ $? -eq 127 ]; then
 
     spark_home="/usr/spark/default"
-    # download_url="https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz"
-    download_url="http://apache.mirrors.hoobly.com/spark/spark-2.4.2/spark-2.4.2-bin-hadoop2.7.tgz"
+    download_url="https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz"
 
     if [ ! -d /usr/spark ]; then
       mkdir -pv /usr/spark
@@ -165,9 +164,9 @@ EOF
 
     echo "downloading $download_url..."
     cmd="curl -O $download_url \
-      && tar -xvf  spark-2.4.2-bin-hadoop2.7.tgz -C /usr/spark \
-      && ln -s /usr/spark/spark-2.4.2-bin-hadoop2.7 $spark_home \
-      && rm -f spark-2.4.2-bin-hadoop2.7.tgz"
+      && tar -xvf  spark-2.4.1-bin-hadoop2.7.tgz -C /usr/spark \
+      && ln -s /usr/spark/spark-2.4.1-bin-hadoop2.7 $spark_home \
+      && rm -f spark-2.4.1-bin-hadoop2.7.tgz"
     eval "$cmd"
 
         export SPARK_HOME=$spark_home

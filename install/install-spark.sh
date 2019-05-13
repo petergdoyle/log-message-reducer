@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root"
    exit 1
@@ -27,8 +26,9 @@ fi
 eval 'spark-submit --version' > /dev/null 2>&1
 if [ $? -eq 127 ]; then
 
+  spark_version='spark-2.4.1'
   spark_home="/usr/spark/default"
-  download_url="https://www-us.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz"
+  download_url="https://archive.apache.org/dist/spark/$spark_version/$spark_version-bin-hadoop2.7.tgz"
 
   if [ ! -d /usr/spark ]; then
     mkdir -pv /usr/spark
@@ -36,35 +36,16 @@ if [ $? -eq 127 ]; then
 
   echo "downloading $download_url..."
   cmd="curl -O $download_url \
-    && tar -xvf  spark-2.4.1-bin-hadoop2.7.tgz -C /usr/spark \
-    && ln -s /usr/spark/spark-2.4.1-bin-hadoop2.7 $spark_home \
-    && rm -f spark-2.4.1-bin-hadoop2.7.tgz"
+    && tar -xvf  $spark_version-bin-hadoop2.7.tgz -C /usr/spark \
+    && ln -s /usr/spark/$spark_version-bin-hadoop2.7 $spark_home \
+    && rm -f $spark_version-bin-hadoop2.7.tgz"
   eval "$cmd"
 
-      export SPARK_HOME=$spark_home
-      cat <<EOF >/etc/profile.d/spark.sh
-export SPARK_HOME=$SPARK_HOME
+  cat <<EOF >/etc/profile.d/spark.sh
+export SPARK_HOME=$spark_home
 export PATH=\$PATH:\$SPARK_HOME/bin
 EOF
-  # spark nodes need a checkpoint directory to keep state should a node go down
-  if [ ! -d "/tmp/spark/checkpoint" ]; then
-    mkdir -pv "/tmp/spark/checkpoint"
-    chmod ugo+rw "/tmp/spark/checkpoint/"
-  fi
-
-  # spark nodes need a logs directory
-  if [ ! -d "/usr/spark/default/logs" ]; then
-    mkdir -pv "/usr/spark/default/logs"
-    chmod ugo+rw "/usr/spark/default/logs"
-  fi
-
-  # spark workers need a work directory
-  if [ ! -d "/usr/spark/default/work" ]; then
-    mkdir -pv "/usr/spark/default/work"
-    chmod ugo+rw "/usr/spark/default/work"
-  fi
-
 
 else
-  echo -e "spark-2.11 already appears to be installed. skipping."
+  echo -e "$SPARK_VERSION already appears to be installed. skipping."
 fi

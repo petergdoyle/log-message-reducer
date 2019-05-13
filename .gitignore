@@ -15,3 +15,4 @@ scratch
 docker-compose.yml
 *.tmp
 log4j2.xml
+log4j2-prev.xml

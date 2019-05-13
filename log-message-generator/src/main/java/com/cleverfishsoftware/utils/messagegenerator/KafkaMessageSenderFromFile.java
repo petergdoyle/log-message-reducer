@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 /**
  */
-public class RunKafkaMessageSenderFromFile {
+public class KafkaMessageSenderFromFile {
 
     public static void main(String[] args) throws IOException {
 
@@ -26,7 +26,7 @@ public class RunKafkaMessageSenderFromFile {
         }
 
         if (error) {
-            System.err.println("Usage RunKafkaMessageSenderFromFile <filename> <broker-list> <logs-topic>\n"
+            System.err.println("Usage KafkaMessageSenderFromFile <filename> <broker-list> <logs-topic>\n"
                     + "filename - the file to read from\n"
                     + "broker-list - the kafka brokers to bootstrap\n"
                     + "logs-topic - the kafka topic name to write to\n"

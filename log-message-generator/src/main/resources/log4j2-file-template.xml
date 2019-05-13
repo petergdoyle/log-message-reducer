@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="info" name="log-message-generator" packages="com.cleverfishsoftware">
     <Appenders>
-        <File name="oneFile" fileName="logs/stdout.log">
+        <File name="oneFile" fileName="logs/%LOG_FILE_NAME%">
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
         </File>
-         <Async name="asyncOneFile">
-            <AppenderRef ref="oneFile"/>
+        <!-- if it runs async then the ERROR delay time is not as significant
+        <Async name="asyncOneFile">
+          <AppenderRef ref="oneFile"/>
         </Async>
+        -->
     </Appenders>
     <Loggers>
         <Root level="TRACE">
-            <AppenderRef ref="asyncOneFile"/>
+            <AppenderRef ref="oneFile"/>
         </Root>
         <Logger name="org.apache.kafka" level="WARN" />
     </Loggers>

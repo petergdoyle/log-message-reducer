@@ -21,9 +21,7 @@ Vagrant.configure("2") do |config|
   # config.vm.network "forwarded_port", guest: 8081, host: 8081 # spark worker web ui port
   # config.vm.network "forwarded_port", guest: 4040, host: 4040 # spark job web ui port
 
-
   config.vm.provider "virtualbox" do |vb|
- #   vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--cpuexecutioncap", "80"]
     vb.cpus=4
     vb.memory = "4096"
@@ -155,9 +153,9 @@ EOF
   eval 'spark-submit --version' > /dev/null 2>&1
   if [ $? -eq 127 ]; then
 
+    spark_version='spark-2.4.1'
     spark_home="/usr/spark/default"
-    # download_url="https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz"
-    download_url="http://apache.mirrors.hoobly.com/spark/spark-2.4.2/spark-2.4.2-bin-hadoop2.7.tgz"
+    download_url="https://archive.apache.org/dist/spark/$spark_version/$spark_version-bin-hadoop2.7.tgz"
 
     if [ ! -d /usr/spark ]; then
       mkdir -pv /usr/spark
@@ -165,34 +163,15 @@ EOF
 
     echo "downloading $download_url..."
     cmd="curl -O $download_url \
-      && tar -xvf  spark-2.4.2-bin-hadoop2.7.tgz -C /usr/spark \
-      && ln -s /usr/spark/spark-2.4.2-bin-hadoop2.7 $spark_home \
-      && rm -f spark-2.4.2-bin-hadoop2.7.tgz"
+      && tar -xvf  $spark_version-bin-hadoop2.7.tgz -C /usr/spark \
+      && ln -s /usr/spark/$spark_version-bin-hadoop2.7 $spark_home \
+      && rm -f $spark_version-bin-hadoop2.7.tgz"
     eval "$cmd"
 
-        export SPARK_HOME=$spark_home
-        cat <<EOF >>/etc/profile.d/spark.sh
-export SPARK_HOME=$SPARK_HOME
-export PATH=\\\$PATH:\\\$SPARK_HOME/bin
+    cat <<EOF >/etc/profile.d/spark.sh
+export SPARK_HOME=$spark_home
+export PATH=\$PATH:\$SPARK_HOME/bin
 EOF
-    # spark nodes need a checkpoint directory to keep state should a node go down
-    if [ ! -d "/tmp/spark/checkpoint" ]; then
-      mkdir -pv "/tmp/spark/checkpoint"
-      chmod ugo+rw "/tmp/spark/checkpoint/"
-    fi
-
-    # spark nodes need a logs directory
-    if [ ! -d "/usr/spark/default/logs" ]; then
-      mkdir -pv "/usr/spark/default/logs"
-      chmod ugo+rw "/usr/spark/default/logs"
-    fi
-
-    # spark workers need a work directory
-    if [ ! -d "/usr/spark/default/work" ]; then
-      mkdir -pv "/usr/spark/default/work"
-      chmod ugo+rw "/usr/spark/default/work"
-    fi
-
 
   else
     echo -e "spark-2.11 already appears to be installed. skipping."
@@ -209,13 +188,14 @@ EOF
     echo 'alias netstat="sudo netstat -tulpn"' >> /home/vagrant/.bashrc
   fi
 
+  # install python and helpful libs
   # yum -y install rh-python36
   # scl enable rh-python36 bash
   # yum -y python36-pip
   # pip3 install numpy pandas
 
   # install any additional packages
-  yum -y install net-tools telnet git htop
+  yum -y install net-tools telnet git htop iftop iptraf-ng.x86_64
 
   # install/configure pre-reqs for fluentd
   # verify with fluentd installation guide https://docs.fluentd.org/v0.12/articles/before-install

@@ -60,10 +60,10 @@ object LogStats {
         .count()
       .writeStream
         .format("console")
-        .option("checkpointLocation",s"$checkpointDir/stats")
-        .option("truncate", false)
-        .trigger(Trigger.ProcessingTime(5.seconds))
-        .outputMode(OutputMode.Complete)
+        // .option("checkpointLocation",s"$checkpointDir/stats") // removed checkpoints
+        // .option("truncate", false)
+        // .trigger(Trigger.ProcessingTime(5.seconds))
+        // .outputMode(OutputMode.Complete)
         .start()
         .awaitTermination
 

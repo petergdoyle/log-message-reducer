@@ -48,11 +48,14 @@ object LogMessageReducer {
     import org.apache.spark.sql.types.{DataTypes, StructType}
     import scala.concurrent.duration._
 
-    val struct = new StructType()
+    val schema = new StructType()
       .add("level", DataTypes.StringType)
       .add("trackId", DataTypes.StringType)
       .add("body", DataTypes.StringType)
       .add("ts", DataTypes.StringType)
+
+    // val logTimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.sss'Z'" // sample: 2019-05-11T03:19:56.833Z
+    // val jsonOptions = { "timestampFormat": logTimestampFormat }
 
     val stdOutDf = spark
       .readStream
@@ -63,7 +66,7 @@ object LogMessageReducer {
         .option("failOnDataLoss", "false")
         .load()
         .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
-        .select(from_json($"value", struct) as("stdout")) // convert to json objects
+        .select(from_json($"value", schema) as("stdout")) // convert to json objects
         .select("stdout.*")
 
 
@@ -76,39 +79,32 @@ object LogMessageReducer {
         .option("failOnDataLoss", "false")
         .load()
         .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
-        .select(from_json($"value", struct) as("stderr")) // convert to json objects
+        .select(from_json($"value", schema) as("stderr")) // convert to json objects
         .select("stderr.*")
 
 
     val joinedDf = stdErrDf.alias("err").join(stdOutDf.alias("out"),Seq("trackId"))
         // val joinedDf = stdErrDf.withWatermark(“eventTime1”, “10 seconds).join(stdOutDf,"trackId")
-        .select("err.trackId","out.level","out.body","out.ts")
+        .select("out.level","err.trackId","out.body","out.ts")
+
+    // joinedDf
+    //  .writeStream
+    //  .format("console")
+    //  .outputMode("append")
+    //  .start()
+    //  .awaitTermination()
 
     joinedDf
-      // .groupBy("trackId")
-      // .count()
-      // .writeStream
-      //   .format("console")
-      //   .option("checkpointLocation",s"$checkpointDir/reducer")
-      //   .option("truncate", false)
-      //   .trigger(Trigger.ProcessingTime(5.seconds))
-      //   .outputMode(OutputMode.Append)
-      //   // .outputMode(OutputMode.Complete)
-      //   .start()
-      //   .awaitTermination
-        .writeStream
-        .format("kafka")
-        .option("kafka.bootstrap.servers", brokers)
-        .option("checkpointLocation",s"$checkpointDir/reduce")
-        .option("topic", producerReducedTopic)
-        .outputMode("append")
-        .start()
-        .awaitTermination()
+      .selectExpr("to_json(struct(*)) AS value")
+      .writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", brokers)
+      .option("topic", producerReducedTopic)
+      .outputMode("append")
+      .option("checkpointLocation",s"$checkpointDir/reducer")
+      .start()
+      .awaitTermination()
 
-
-
-
-    spark.stop()
 
   }
 

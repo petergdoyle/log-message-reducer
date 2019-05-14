@@ -1,6 +1,8 @@
 # log-message-reducer
 
+A project to see the "join" function in Spark Structured Streaming. The goal is to reduce log messages coming from two topics, one to represent messages logged as error, and one to represent messages logged as other than error but some that are directly related to the errors by means of a tracking id.
 
+![pic](log-message-reducer.jpg)
 
 ## Required Environment:
 ### Java Jdk 8
@@ -117,7 +119,7 @@ The following command will be run:
 java -Duser.timezone=UTC -cp log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar com.cleverfishsoftware.utils.messagegenerator.LogMessageGenerator -1 100.0 0.05 1500
 Press any key to continue
 ```
-Once running you can see details about the load and information about the embedded kafka producer as it runs. Near the end you can see how many messages are created and the type of messages. Depending on how you specified the error ratio, you will see errors show up accordingly. 
+Once running you can see details about the load and information about the embedded kafka producer as it runs. Near the end you can see how many messages are created and the type of messages. Depending on how you specified the error ratio, you will see errors show up accordingly.
 ```
 [main] INFO org.apache.kafka.clients.producer.ProducerConfig - ProducerConfig values:
 	acks = 1

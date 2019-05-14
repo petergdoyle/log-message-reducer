@@ -13,8 +13,8 @@ Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
 
-  # config.vm.box = "centos/7"
-  config.vm.box = "petergdoyle/CentOS-7-x86_64-Minimal-1511"
+  config.vm.box = "centos/7"
+  # config.vm.box = "petergdoyle/CentOS-7-x86_64-Minimal-1511"
   config.ssh.insert_key = false
 
   # config.vm.network "forwarded_port", guest: 8080, host: 8080 # spark master web ui port

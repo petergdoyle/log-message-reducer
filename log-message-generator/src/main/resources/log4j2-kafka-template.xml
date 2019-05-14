@@ -5,9 +5,12 @@
             <Property name="bootstrap.servers">%BROKER_LIST%</Property>
             <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>
         </Kafka>
+        <!--
+        This may be causing issues within docker but certainly affects the 'error_delay' in the LogMessageGenerator
         <Async name="asyncKafka">
             <AppenderRef ref="kafka"/>
         </Async>
+        -->
     </Appenders>
     <Loggers>
         <Root level="TRACE">

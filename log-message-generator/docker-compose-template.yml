@@ -2,9 +2,9 @@ version: '3'
 services:
   LogMessageGenerator-service:
     image: cleverfishsoftware.com/log-message-generator
-    extra_hosts:
+    network_mode: host
     command: "log-message-generator.cmd"
   LogMessageSplitter-service:
     image: cleverfishsoftware.com/log-message-generator
-    extra_hosts:
+    network_mode: host
     command: "log-message-splitter.cmd"

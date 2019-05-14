@@ -8,7 +8,7 @@ fi
 eval 'docker --version' > /dev/null 2>&1
 if [ $? -eq 127 ]; then
   echo "installing docker and docker-compose..."
-
+  yum -y install epel-release
   yum -y remove docker docker-common  docker-selinux docker-engine
   yum -y install yum-utils device-mapper-persistent-data lvm2
   yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo

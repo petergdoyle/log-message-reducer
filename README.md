@@ -198,7 +198,8 @@ Messages generated will look like the following as formatted by log4j pattern <P
 
 ### Run Log Message Splitter
 The main purpose of the Log Message Generator is to create a stream of logging messages that have a tracking id where errors that come later, as indicated by a timestamp on the record, can be correlated by to those non-error messages. The Log Message Generator is capable of creating an Error message, then using the same tracking id, create other random message types and push them into the log stream, and eventually push the Error message into the same stream. Spark Structured SQL Streaming can do a join on the two kafka streams by topic one Error and on Non-Error so the purpose of the Log Message Splitter is to read from the logs stream and identify Error and Non-Error messages and push them into the associated logs-stderr and logs-stdout topic so that the Log Message Reducer can read from both topics, do a join on those message streams by tracking id and only write the messages related to the Error stream out to a logs-reduced topic. You'll see more about the Log Message Reducer in the next steps.
-You will be prompted for the Kafka cluster details and then see console messages from both the embedded Kafka Consumer and Kafka Producer since the Log Message Splitter is taking from the logs topic and spltting then writing out to log-stdout or logs-stderr
+You will be prompted for the Kafka cluster details and then see console messages from both the embedded Kafka Consumer and Kafka Producer since the Log Message Splitter is taking from the logs topic and spltting then writing out to log-stdout or logs-stderr.
+Near the end you will also see the command to run this with the parameters provided and you can reuse that later and you will also see runtime stats about what it is reading and writing to.
 ```
 $ ./run_LogMessageSplitter.sh
 [INFO] Scanning for projects...
@@ -361,5 +362,162 @@ Press any key to continue[main] INFO org.apache.kafka.clients.consumer.ConsumerC
 
 
 ### Optionally Run Log Message Generator and Log Message Splitter as managed Docker Services using Docker-Compose
+Remember if you cancel running either the Log Message Generator or Log Message Splitter then they stop. You can keep them running with Docker and Docker-Compose. There is a script to set both utilities up and then launch containers to run in the background as daemon processes.
 ```
+$ ./run_LogMessageGenerator_LogMessageSplitter_in_docker_containers.sh
+--docker
+‘log-message-generator/src/main/resources/log4j2.xml’ -> ‘log-message-generator/src/main/resources/log4j2-prev.xml’
+[LogMessageGenerator] Specify Log4j Appender ('stdout'|'kafka'|'file'): kafka
+‘log-message-generator/src/main/resources/log4j2-kafka-template.xml’ -> ‘log-message-generator/src/main/resources/log4j2.xml’
+[LogMessageGenerator] Enter the Kafka Broker list: engine2:9092
+[LogMessageGenerator] Enter the Kafka Logs Topic name to take from : logs
+A build is required to make these changes...
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------< com.cleverfishsoftware.utils:log-message-generator >---------
+[INFO] Building log-message-generator 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ log-message-generator ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 6 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ log-message-generator ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ log-message-generator ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /vagrant/log-message-generator/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ log-message-generator ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ log-message-generator ---
+[INFO]
+[INFO] --- maven-jar-plugin:3.1.1:jar (default-jar) @ log-message-generator ---
+[INFO] Building jar: /vagrant/log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.567 s
+[INFO] Finished at: 2019-05-14T12:06:45-04:00
+[INFO] ------------------------------------------------------------------------
+[LogMessageGenerator] Enter the number of messages to generate (-1 to run continously): -1
+[LogMessageGenerator] Enter the message generation rate (messages per second): 20.0
+[LogMessageGenerator] Enter the error generation rate (percentage of overall messages): 0.05
+[LogMessageGenerator] Enter the delay for errors to be sent after related non-error messages (in millis): 1500
+--docker
+--skipBuild
+[LogMessageSplitter] Enter the Kafka Broker list: engine2:9092
+[LogMessageSplitter] Enter the Kafka Logs Topic name to take from : logs
+[LogMessageSplitter] Enter the Kafka Logs Error Topic name to write to: logs-stderr
+[LogMessageSplitter] Enter the Kafka Logs Topic name to write to: logs-stdout
+java -cp log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar com.cleverfishsoftware.utils.messagegenerator.LogMessageSplitter engine2:9092 logs logs-stderr logs-stdout
+Sending build context to Docker daemon   8.73MB
+Step 1/5 : FROM centos
+ ---> 9f38484d220f
+Step 2/5 : ENV JAVA_HOME /usr/java/default
+ ---> Using cache
+ ---> ac0f77adfef5
+Step 3/5 : RUN yum -y install java-1.8.0-openjdk-headless && yum -y install java-1.8.0-openjdk-devel
+ ---> Using cache
+ ---> 65bcfbfe3b1d
+Step 4/5 : COPY target/lib /log-message-generator/target/lib
+ ---> Using cache
+ ---> 8cb5bac48a26
+Step 5/5 : COPY target/log-message-generator-1.0-SNAPSHOT.jar /log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar
+ ---> 47c91357af05
+Successfully built 47c91357af05
+Successfully tagged cleverfishsoftware.com/log-message-generator:latest
+About to start container services using command: docker-compose -f log-message-generator/docker-compose.yml up -d?
+Proceed(y/n)? y
+Creating log-message-generator_LogMessageGenerator-service_1 ... done
+Creating log-message-generator_LogMessageSplitter-service_1  ... done
+```
+To shut them down you can destroy them with the docker-compose command
+```
+$ docker-compose -f log-message-generator/docker-compose.yml down
+```
+
+Note that the Log Message Splitter also strips off the Log4j information other than the message body. So the messages going to logs-stdout and logs-stderr look like this. Notice that all that is left is the JSON body, so that it can be treated as a JSON message in the Log Message Reducer.
+```
+{"level":"fatal","trackId":"5ceb02cd-5adb-4a6f-ac8c-c1e05cfd5fcb","body":"fastidii velit pro habeo suas lacus eirmod menandri eam","ts":"2019-05-14T16:14:28.104Z"}
+{"level":"trace","trackId":"5ceb02cd-5adb-4a6f-ac8c-c1e05cfd5fcb","body":"tristique magnis suavitate definiebas equidem maximus volutpat interpretaris deterruisset","ts":"2019-05-14T16:14:28.143Z"}
+{"level":"debug","trackId":"5ceb02cd-5adb-4a6f-ac8c-c1e05cfd5fcb","body":"nihil taciti eloquentiam mea sea legere lacus reformidans omnesque","ts":"2019-05-14T16:14:28.183Z"}
+{"level":"trace","trackId":"5ceb02cd-5adb-4a6f-ac8c-c1e05cfd5fcb","body":"iuvaret eros orci sit eleifend sanctus integer invidunt eripuit eros epicuri consul mei constituto","ts":"2019-05-14T16:14:28.223Z"}
+
+```
+
+### Run Log Message Reducer
+The Log Message Reducer is the meat of the matter here, the rest is just stand up for getting the streaming Error and Non-Error streams up and running. Let's take a look at the code. It is written in Scala and is very declarative.
+- Create a SparkSession
+- Create a Struct to hold the parsed JSON message data
+- Create a Spark streaming context for both the logs-stderr and logs-stdout topics to be read from
+- Join on the trackId field
+- Write the joined streams out to a single logs-reduced topic
+
+Spark Structured Streaming Watermarks
+Watermarks is a threshold , which defines the how long we wait for the late events. Combining watermarks with automatic source time tracking ( event time) spark can automatically drop the state and keep it in bounded way. When you enable watermarks, for a specific window starting at time T, spark will maintain state and allow late data to update the state until (max event time seen by the engine - late threshold > T). In other words, late data within the threshold will be aggregated, but data later than the threshold will be dropped.
+
+Spark Structured Streaming Watermarks combined with an Event Timestamp.
+By defining a timestamp field in the Stuct type and parsing it, the Watermark or (window) will use Event Time rather than Arrival time to keep within the Watermark bounds. 
+```
+
+    val spark = SparkSession
+      .builder
+      .appName("LogMessageReducer")
+      .getOrCreate() // recover session from checkpoint if necessary
+
+    import spark.implicits._
+    import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+    import org.apache.spark.sql.types.{DataTypes, StructType}
+    import scala.concurrent.duration._
+
+    val schema = new StructType()
+      .add("level", DataTypes.StringType)
+      .add("trackId", DataTypes.StringType)
+      .add("body", DataTypes.StringType)
+      .add("ts", DataTypes.StringType)
+
+    val stdOutDf = spark
+      .readStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("subscribe", consumerTopicStdOut)
+        .option("startingOffsets", "latest")
+        .option("failOnDataLoss", "false")
+        .load()
+        .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
+        .select(from_json($"value", schema) as("stdout")) // convert to json objects
+        .select("stdout.*")
+
+
+    val stdErrDf = spark
+      .readStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("subscribe", consumerTopicStdErr)
+        .option("startingOffsets", "latest")
+        .option("failOnDataLoss", "false")
+        .load()
+        .selectExpr("CAST(value AS STRING)") // take the "value" field from the Kafka ConsumerRecord
+        .select(from_json($"value", schema) as("stderr")) // convert to json objects
+        .select("stderr.*")
+
+
+    val joinedDf = stdErrDf.alias("err").join(stdOutDf.alias("out"),Seq("trackId"))
+        // val joinedDf = stdErrDf.withWatermark(“eventTime1”, “10 seconds).join(stdOutDf,"trackId")
+        .select("out.level","err.trackId","out.body","out.ts")
+
+    joinedDf
+      .selectExpr("to_json(struct(*)) AS value")
+      .writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", brokers)
+      .option("topic", producerReducedTopic)
+      .outputMode("append")
+      .option("checkpointLocation",s"$checkpointDir/reducer")
+      .start()
+      .awaitTermination()
+
 ```

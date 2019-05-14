@@ -596,6 +596,10 @@ To see the logs-stdout and logs-stderr streams of data (from Log Message Splitte
 ```
 $ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-stdout
 ...
-$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-stdout
+$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-stderr
 ...
+```
+and of course the output of the Log Message Reducer
+```
+$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-reduced 
 ```

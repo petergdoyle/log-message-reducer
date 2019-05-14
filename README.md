@@ -42,13 +42,21 @@ $ ./run_maven_priming_build.sh
 
 ### Create Kafka Topics
 You need to have a running Kafka Cluster or standalone server up and running. Installing Kafka as outlined before only will install Kafka client libraries and utilities on the client machine. If you intend on using the same machine or to stand up a small Kafka cluster for development and testing then the recommendation is to clone another repo with the scripts required to setup and configure Kafka.
-Clone "kafka-cluster-quick" and follow the instructions there.
+Clone "kafka-cluster-quick" and follow the instructions there. There are scripts to stand up and tear down a single or multi-node cluster.
 ```
 $ git clone https://github.com/petergdoyle/kafka-cluster-quick.git
 ```
-Once a Kafka cluster is available, you need to create the required topics. There is a script to do that in this project. You will be prompted for the cluster details, specifically for the Zookeeper address and then it will create the required topics to continue here. 
+Once a Kafka cluster is available, you need to create the required topics. There is a script to do that in this project. You will be prompted for the cluster details, specifically for the Zookeeper address and then it will create the required topics to continue here.
 ```
 ./kafka_create_topics.sh
+```
+Once topics are created, you can verify by checking
+```
+./kafka_list_topics.sh
+```
+There are other scripts and functions in the kafka-cluster-quick repo if you are going to manage your own cluster. Example to check the status of Kafka on a single Node. This will show you process numbers of the Zookeeper and Brokers and make sure things are okay. You can also check out logs under ```/usr/kafka/default/logs"``` or where ever ```$KAFKA_HOME``` is set.
+```
+kafka-cluster-quick/kafka_check_status.sh
 ```
 
 ### Run Log Message Generator

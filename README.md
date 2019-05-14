@@ -182,10 +182,181 @@ Once running you can see details about the load and information about the embedd
 
 [LogMessageGenerator] Total: 934 {warn=161, trace=193, debug=176, error=47, fatal=171, info=186}
 ```
+Messages generated will look like the following as formatted by log4j pattern <PatternLayout pattern="%d{[dd/MMM/yyyy:hh:mm:ss Z]} %-5p [%-7t] %F:%L - %m%n"/>. The Log Message Splitter (next step) is looking for this form in order to distinguish between Error and Non-Error messages.
+```
+[14/May/2019:03:46:28 +0000] WARN  [pool-2-thread-2] LogMessage.java:81 - {"level":"warn","trackId":"dc04a3a2-fdc3-4ff6-8d54-eb97695b1fc9","body":"omittam purus eius ne oporteat non pulvinar voluptatibus impetus fames","ts":"2019-05-14T15:46:28.904Z"}
 
+[14/May/2019:03:46:28 +0000] DEBUG [pool-2-thread-2] LogMessage.java:78 - {"level":"debug","trackId":"dc04a3a2-fdc3-4ff6-8d54-eb97695b1fc9","body":"idque conubia senectus dico atqui postulant vix","ts":"2019-05-14T15:46:28.944Z"}
+
+[14/May/2019:03:46:28 +0000] DEBUG [pool-2-thread-2] LogMessage.java:78 - {"level":"debug","trackId":"dc04a3a2-fdc3-4ff6-8d54-eb97695b1fc9","body":"noster inceptos natoque erroribus nascetur","ts":"2019-05-14T15:46:28.983Z"}
+
+[14/May/2019:03:46:29 +0000] DEBUG [pool-2-thread-2] LogMessage.java:78 - {"level":"debug","trackId":"dc04a3a2-fdc3-4ff6-8d54-eb97695b1fc9","body":"nascetur suspendisse perpetua curae mattis molestie","ts":"2019-05-14T15:46:29.023Z"}
+
+[14/May/2019:03:46:29 +0000] INFO  [pool-2-thread-2] LogMessage.java:84 - {"level":"info","trackId":"dc04a3a2-fdc3-4ff6-8d54-eb97695b1fc9","body":"doming omittam inani graecis dolore ipsum tritani","ts":"2019-05-14T15:46:29.063Z"}
+
+```
 
 ### Run Log Message Splitter
+The main purpose of the Log Message Generator is to create a stream of logging messages that have a tracking id where errors that come later, as indicated by a timestamp on the record, can be correlated by to those non-error messages. The Log Message Generator is capable of creating an Error message, then using the same tracking id, create other random message types and push them into the log stream, and eventually push the Error message into the same stream. Spark Structured SQL Streaming can do a join on the two kafka streams by topic one Error and on Non-Error so the purpose of the Log Message Splitter is to read from the logs stream and identify Error and Non-Error messages and push them into the associated logs-stderr and logs-stdout topic so that the Log Message Reducer can read from both topics, do a join on those message streams by tracking id and only write the messages related to the Error stream out to a logs-reduced topic. You'll see more about the Log Message Reducer in the next steps.
+You will be prompted for the Kafka cluster details and then see console messages from both the embedded Kafka Consumer and Kafka Producer since the Log Message Splitter is taking from the logs topic and spltting then writing out to log-stdout or logs-stderr
 ```
+$ ./run_LogMessageSplitter.sh
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------< com.cleverfishsoftware.utils:log-message-generator >---------
+[INFO] Building log-message-generator 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ log-message-generator ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 6 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ log-message-generator ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ log-message-generator ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /vagrant/log-message-generator/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ log-message-generator ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ log-message-generator ---
+[INFO]
+[INFO] --- maven-jar-plugin:3.1.1:jar (default-jar) @ log-message-generator ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.996 s
+[INFO] Finished at: 2019-05-14T11:59:43-04:00
+[INFO] ------------------------------------------------------------------------
+[LogMessageSplitter] Enter the Kafka Broker list: engine2:9092
+[LogMessageSplitter] Enter the Kafka Logs Topic name to take from : logs
+[LogMessageSplitter] Enter the Kafka Logs Error Topic name to write to: logs-stderr
+[LogMessageSplitter] Enter the Kafka Logs Topic name to write to: logs-stdout
+The following command will be run:
+java -cp log-message-generator/target/log-message-generator-1.0-SNAPSHOT.jar com.cleverfishsoftware.utils.messagegenerator.LogMessageSplitter engine2:9092 logs logs-stderr logs-stdout
+Press any key to continue[main] INFO org.apache.kafka.clients.consumer.ConsumerConfig - ConsumerConfig values:
+	auto.commit.interval.ms = 1000
+	auto.offset.reset = latest
+	bootstrap.servers = [engine2:9092]
+	check.crcs = true
+	client.id =
+	connections.max.idle.ms = 540000
+	enable.auto.commit = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = LogMessageSplitter-cg
+	heartbeat.interval.ms = 3000
+	interceptor.classes = null
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 305000
+	retry.backoff.ms = 100
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	send.buffer.bytes = 131072
+	session.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.1, TLSv1]
+	ssl.endpoint.identification.algorithm = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLS
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+[main] INFO org.apache.kafka.common.utils.AppInfoParser - Kafka version : 0.10.2.1
+[main] INFO org.apache.kafka.common.utils.AppInfoParser - Kafka commitId : e89bffd6b2eff799
+[main] INFO org.apache.kafka.clients.producer.ProducerConfig - ProducerConfig values:
+	acks = all
+	batch.size = 16384
+	block.on.buffer.full = false
+	bootstrap.servers = [engine2:9092]
+	buffer.memory = 33554432
+	client.id =
+	compression.type = none
+	connections.max.idle.ms = 540000
+	interceptor.classes = null
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 1
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.fetch.timeout.ms = 60000
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.sample.window.ms = 30000
+	partitioner.class = class org.apache.kafka.clients.producer.internals.DefaultPartitioner
+	receive.buffer.bytes = 32768
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 0
+	retry.backoff.ms = 100
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	send.buffer.bytes = 131072
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.1, TLSv1]
+	ssl.endpoint.identification.algorithm = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLS
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	timeout.ms = 30000
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+[main] INFO org.apache.kafka.common.utils.AppInfoParser - Kafka version : 0.10.2.1
+[main] INFO org.apache.kafka.common.utils.AppInfoParser - Kafka commitId : e89bffd6b2eff799
+
+
+[main] INFO org.apache.kafka.clients.consumer.internals.AbstractCoordinator - Discovered coordinator engine2:9092 (id: 2147483645 rack: null) for group LogMessageSplitter-cg.
+[main] INFO org.apache.kafka.clients.consumer.internals.ConsumerCoordinator - Revoking previously assigned partitions [] for group LogMessageSplitter-cg
+[main] INFO org.apache.kafka.clients.consumer.internals.AbstractCoordinator - (Re-)joining group LogMessageSplitter-cg
+[main] INFO org.apache.kafka.clients.consumer.internals.AbstractCoordinator - Successfully joined group LogMessageSplitter-cg with generation 23
+[main] INFO org.apache.kafka.clients.consumer.internals.ConsumerCoordinator - Setting newly assigned partitions [logs-1] for group LogMessageSplitter-cg
+[KafkaTopicSplitter] Counter: 199 Totals: {STDERR=11, STDOUT=188}
 ```
 
 

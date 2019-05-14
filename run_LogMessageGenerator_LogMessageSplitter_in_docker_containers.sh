@@ -5,7 +5,7 @@ cat log-message-generator/docker-compose-template.yml >log-message-generator/doc
 rm -fv log-message-generator/*cmd
 
 # get the log-message-generator set up and capture the runtime parameterized command
-./run_log_message_generator.sh --docker
+./run_LogMessageGenerator.sh --docker
 if [ $? -eq 0 ] && [ -f log-message-generator/run_log_message_generator.cmd ]; then
   cmd=$(cat log-message-generator/run_log_message_generator.cmd)
   sed -i "s#log-message-generator.cmd#$cmd#g" log-message-generator/docker-compose.yml
@@ -15,7 +15,7 @@ else
 fi
 
 # get the log-message-generator set up and capture the runtime parameterized command
-./run_log_message_splitter.sh --docker --skipBuild
+./run_LogMessageSplitter.sh --docker --skipBuild
 if [ $? -eq 0 ] && [ -f log-message-generator/run_log_message_splitter.cmd ]; then
   cmd=$(cat log-message-generator/run_log_message_splitter.cmd)
   echo $cmd

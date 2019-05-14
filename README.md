@@ -32,16 +32,27 @@ You can pick and choose anything that is missing but in the end you will still n
 ## Steps
 
 ### Install all dependencies
-Make sure you install each of the following
+Make sure you install each of the following as outlined above.
 
 ### Run Maven Priming Build
-There are three projects that need to be fully built first so that all dependencies are pulled down and assembled. You can go an do a full ```mvn clean install``` in each of the three project directories (log-message-generator/, log-message-reducer-uber-jar/, log-message-reducer/) or just run the following script to do the same.  
+There are three projects that need to be fully built first so that all dependencies are pulled down and assembled. You can go an do a full ```mvn clean install``` in each of the three project directories (```log-message-generator/, log-message-reducer-uber-jar/, log-message-reducer/```) or just run the following script to do the same.  
 ```
 $ ./run_maven_priming_build.sh
 ```
 
+### Create Kafka Topics
+You need to have a running Kafka Cluster or standalone server up and running. Installing Kafka as outlined before only will install Kafka client libraries and utilities on the client machine. If you intend on using the same machine or to stand up a small Kafka cluster for development and testing then the recommendation is to clone another repo with the scripts required to setup and configure Kafka.
+Clone "kafka-cluster-quick" and follow the instructions there.
+```
+$ git clone https://github.com/petergdoyle/kafka-cluster-quick.git
+```
+Once a Kafka cluster is available, you need to create the required topics. There is a script to do that in this project. You will be prompted for the cluster details, specifically for the Zookeeper address and then it will create the required topics to continue here. 
+```
+./kafka_create_topics.sh
+```
 
 ### Run Log Message Generator
+
 ```
 ```
 

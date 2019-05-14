@@ -11,21 +11,6 @@ spark_checkpoint_dir="/tmp/spark/checkpoint"
 if test -d $SPARK_HOME/conf/spark-cluster.info; then
   spark_checkpoint_dir="$(cat /usr/spark/default/conf/spark-cluster.info |grep SPARK_CHECKPOINT_DIR| cut -d "=" -f 2)"
 fi
-#
-# if test -d $spark_checkpoint_dir; then
-#  # "exists"
-#   if test "$(ls -A $spark_checkpoint_dir)"; then
-#     # "not empty"
-#     prompt="The Spark checkpoint directory $spark_checkpoint_dir is not empty. Do you want to delete it? (y/n): "
-#     default_value="y"
-#     read -e -p "$(echo -e $prompt)" -i $default_value response
-#     if [ "$response" == 'y' ]; then
-#       sudo rm -frv $spark_checkpoint_dir/*
-#     fi
-#   fi
-# else
-#   # "not exists "
-# fi
 
 skip_build=false
 for var in "$@"

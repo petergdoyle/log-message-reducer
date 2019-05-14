@@ -460,7 +460,7 @@ Spark Structured Streaming Watermarks
 Watermarks is a threshold , which defines the how long we wait for the late events. Combining watermarks with automatic source time tracking ( event time) spark can automatically drop the state and keep it in bounded way. When you enable watermarks, for a specific window starting at time T, spark will maintain state and allow late data to update the state until (max event time seen by the engine - late threshold > T). In other words, late data within the threshold will be aggregated, but data later than the threshold will be dropped.
 
 Spark Structured Streaming Watermarks combined with an Event Timestamp.
-By defining a timestamp field in the Stuct type and parsing it, the Watermark or (window) will use Event Time rather than Arrival time to keep within the Watermark bounds. 
+By defining a timestamp field in the Stuct type and parsing it, the Watermark or (window) will use Event Time rather than Arrival time to keep within the Watermark bounds.
 ```
 
     val spark = SparkSession
@@ -520,4 +520,82 @@ By defining a timestamp field in the Stuct type and parsing it, the Watermark or
       .start()
       .awaitTermination()
 
+```
+
+### Submitting the Job to Spark Standalone
+The script here submits jobs to a Spark Standalone cluster. Spark is installed but is not running yet as a cluster. If you want to setup and configure a Spark Standalone cluster then clone spark-standalone-quick from https://github.com/petergdoyle/spark-standalone-quick and follow the scripts there to configure spark standalone with either a single node or mult-node configuration.
+Once done you can submit the spark Log Message Reducer and check the results (next step)
+```
+$ ./spark_submit_LogMessageReducer.sh
+[INFO] Scanning for projects...
+[INFO]
+[INFO] -------------< com.cleverfishsoftware:log-message-reducer >-------------
+[INFO] Building log-message-reducer 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ log-message-reducer ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /vagrant/log-message-reducer/src/main/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ log-message-reducer ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- scala-maven-plugin:4.0.1:compile (default) @ log-message-reducer ---
+[WARNING]  Expected all dependencies to require Scala version: 2.11.-1
+[WARNING]  com.cleverfishsoftware:log-message-reducer:1.0-SNAPSHOT requires scala version: 2.11.11
+[WARNING]  org.json4s:json4s-core_2.10:3.2.10 requires scala version: 2.10.0
+[WARNING] Multiple versions of scala libraries detected!
+[INFO] Using incremental compilation using Mixed compile order
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ log-message-reducer ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /vagrant/log-message-reducer/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ log-message-reducer ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-surefire-plugin:2.21.0:test (default-test) @ log-message-reducer ---
+[INFO] Tests are skipped.
+[INFO]
+[INFO] --- scalatest-maven-plugin:2.0.0:test (test) @ log-message-reducer ---
+Discovery starting.
+Discovery completed in 361 milliseconds.
+Run starting. Expected test count is: 0
+DiscoverySuite:
+Run completed in 515 milliseconds.
+Total number of tests run: 0
+Suites: completed 1, aborted 0
+Tests: succeeded 0, failed 0, canceled 0, ignored 0, pending 0
+No tests were executed.
+[INFO]
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ log-message-reducer ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.854 s
+[INFO] Finished at: 2019-05-14T12:50:19-04:00
+[INFO] ------------------------------------------------------------------------
+[LogMessageReducer] Enter the Kafka Broker list: localhost:9092
+[LogMessageReducer] Enter the Kafka Consumer Group name: LogMessageReducer-cg
+[LogMessageReducer] Enter the topic name for STDOUT messages: logs-stdout
+[LogMessageReducer] Enter the topic name for STDERR messages: logs-stderr
+[LogMessageReducer] Enter the topic name for the Joined messages: logs-reduced
+[LogMessageReducer] Enter spark url for the Spark Master Node: spark://engine1:7077
+[LogMessageReducer] Enter spark deployment mode (local/cluster) to run the Driver Program: local
+The following command will be run:
+spark-submit --driver-java-options "-Dlog4j.configuration=file:///vagrant/spark_log4j_QUIET.properties"  --master spark://engine1:7077 --supervise  --jars /vagrant/log-message-reducer-uber-jar/target/log-message-reducer-uber-jar-1.0-SNAPSHOT-jar-with-dependencies.jar --class com.cleverfishsoftware.challenge.scala.LogMessageReducer /vagrant/log-message-reducer/target/log-message-reducer-1.0-SNAPSHOT.jar localhost:9092 LogMessageReducer-cg logs-stdout logs-stderr logs-reduced /tmp/spark/checkpoint
+Press any key to continue
+```
+### Seeing the results
+To see the logs stream of data (from Log Message Generator) - substituting broker1 for the correct one.
+```
+$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs
+```
+
+To see the logs-stdout and logs-stderr streams of data (from Log Message Splitter)
+```
+$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-stdout
+...
+$ kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic logs-stdout
+...
 ```

@@ -65,7 +65,7 @@ public class LogMessageGenerator {
                     + "\n");
             System.exit(1);
         }
-        Lorem lorem = LoremIpsum.getInstance();
+        Lorem lorem = LoremIpsum.getInstance(); // random content of the messages will be based on Lorem Ipsum
         Random random = new Random();
         int randWordLenMin = 5;
         int randWordLenMax = 15;
@@ -83,41 +83,41 @@ public class LogMessageGenerator {
                 + "and an error delay of %d milliseconds. "
                 + "it should take aproximately %.1f "
                 + "seconds to complete...\n\n", messageLimit, rateLimit, errRateLimit, errorDelay, seconds);
-        for (int i = 0; i < messageLimit; i++) {
+        for (int i = 0; i < messageLimit; i++) { // stay within the bounds of the runtime message limit defined by startup paramater 
 
-            final String trackingId = UUID.randomUUID().toString();
-            if (usedTrackingIds.contains(trackingId)) {
+            final String trackingId = UUID.randomUUID().toString(); // a UUID will become the message tracking id to be able to correlate related messages 
+            if (usedTrackingIds.contains(trackingId)) { // this check may be unnecessary but... 
                 throw new RuntimeException("Unexpected Condition. Tracking Id must be unique. Found more than one generated Tradking Id for trackingId: " + trackingId);
             }
-            usedTrackingIds.add(trackingId);
+            usedTrackingIds.add(trackingId); // just keep track of them anyways 
 
-            LogMessage.Level randomLevel = LogMessage.Level.getRandomLevel(random);
+            LogMessage.Level randomLevel = LogMessage.Level.getRandomLevel(random); // select one of the log message levels 
 
-            if (randomLevel.equals(LogMessage.Level.error)) {
-                double errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;
-                if (errRate <= errRateLimit) {
+            if (randomLevel.equals(LogMessage.Level.error)) { // if it is an error, then we need to generate some related messages tied together with that tracking id 
+                double errRate = (i > 0) ? (float) (errCnt) / (float) (i) : 0.0;  // calculate the current rate of errors and don't divide by zero the first time
+                if (errRate <= errRateLimit) { // stay within the specified error rate 
                     int r = random.nextInt((relatedMsgCntMax - relatedMsgCntMin) + 1) + relatedMsgCntMin;
                     for (int j = 0; j < r; j++) {
                         do {
                             randomLevel = LogMessage.Level.getRandomLevel(random);
-                        } while (randomLevel.equals(LogMessage.Level.error));
+                        } while (randomLevel.equals(LogMessage.Level.error)); // now randomly generate some log levels other than error 
                         if (randomLevel.equals(LogMessage.Level.error)) {
                             throw new RuntimeException("Unexpected Condition. This should never be " + LogMessage.Level.error.toString());
                         }
                         String randomLevelAsString = randomLevel.toString();
-                        rateLimiter.execute(() -> {
+                        rateLimiter.execute(() -> { // rateLimiter will emit log messages at the rate specified at startup 
                             new LogMessage.Builder(LOGGER, LogMessage.Level.valueOf(randomLevelAsString), lorem.getWords(randWordLenMin, randWordLenMax))
                                     .addTag("trackId", trackingId)
                                     .addTag("level", randomLevelAsString)
                                     .log();
                         });
                         i++;
-                        Integer get = counts.get(randomLevelAsString);
+                        Integer get = counts.get(randomLevelAsString); // keeping track of counts by log level for display and verification purposes 
                         counts.put(randomLevelAsString, ((get != null) ? get : 0) + 1);
                     }
-                    rateLimiter.execute(() -> {
+                    rateLimiter.execute(() -> { // once the related messages related to the error are emitted emit the error itself but late so it is downstream of the related messsages 
                         try {
-                            TimeUnit.MILLISECONDS.sleep(errorDelay);
+                            TimeUnit.MILLISECONDS.sleep(errorDelay); // delay emission for a bit 
                             new LogMessage.Builder(LOGGER, LogMessage.Level.error, lorem.getWords(randWordLenMin, randWordLenMax))
                                     .addTag("trackId", trackingId)
                                     .addTag("level", LogMessage.Level.error.toString())
@@ -125,11 +125,11 @@ public class LogMessageGenerator {
                         } catch (InterruptedException ex) {
                         }
                     });
-                    errCnt++;
+                    errCnt++; // keep track of errors to keep track of current rate limit 
                     Integer get = counts.get(LogMessage.Level.error.toString());
                     counts.put(LogMessage.Level.error.toString(), ((get != null) ? get : 0) + 1);
                 } else {
-                    i--; // don't count this iteration as nothing got logged
+                    i--; // don't count this iteration as nothing got logged, the error rate limit was exceeded 
                 }
             } else {
                 // log the non error normally using the RateLimiter

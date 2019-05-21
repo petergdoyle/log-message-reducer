@@ -17,7 +17,7 @@ A project to see the "join" function in Spark Structured Streaming. The goal is 
 A Vagrantfile is included that will build a CentOS VM and provision it with all the aforementioned Required Environment items.
 
 ### Install Manually
-There is an ```install/``` directory included which has individual installation scripts for everything. There is a sequence of installation that is required. For each script, a new environment variable is set, so you need to run the scripts as root (or "sudo su -") and then exit that session and sudo back in in order to set these Environment variables for the next step. At the end, you should be able to all of them. You need these components all installed and environment variables set.
+There is an ```install/``` directory included which has individual installation scripts for everything. There is a sequence of installation that is required. For each script, a new environment variable is set, so you need to run the scripts as root (or "```sudo su -```") and then exit that session and sudo back in in order to set these Environment variables for the next step. At the end, you should be able to see all of them set correctly with an ```env```command. You need these components all installed and environment variables set.
 ```
 $ env |grep HOME
 KAFKA_HOME=/vagrant/kafka-proxied/local/kafka/default

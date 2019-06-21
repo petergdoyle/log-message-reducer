@@ -5,6 +5,7 @@ A project to see the "join" function in Spark Structured Streaming. The goal is 
 ![pic](log-message-reducer.jpg)
 
 ## Required Environment:
+### git (to clone additional repos)
 ### Java Jdk 8
 ### Maven 3.6
 ### Scala 2.11
